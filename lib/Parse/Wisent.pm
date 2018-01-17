@@ -14,8 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# ABSTRACT: Compiler compiler (bison-style) and lexer (flex-style) for Perl.
+
 package Parse::Wisent;
 
 use strict;
+
+sub new {
+    bless {}, shift;
+}
 
 1;

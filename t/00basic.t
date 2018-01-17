@@ -16,6 +16,12 @@
 
 use strict;
 
-use Test::More tests => 1;
+use Test::More tests => 4;
 
-ok 1;
+ok require Parse::Wisent;
+my $parser = Parse::Wisent->new;
+ok $parser;
+ok ref $parser;
+ok $parser->isa('Parse::Wisent');
+
+

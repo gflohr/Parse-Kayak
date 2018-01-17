@@ -1,0 +1,15 @@
+%%
+input_file: definitions '%%' rules
+          | definitions '%%' rules '%%' user_code
+          ;
+
+definitions: definition definitions
+           | /* empty */
+           ;
+
+definition: name_definition
+          ;
+
+name_definition: NAME REGEX
+               ;
+%%

@@ -5,7 +5,7 @@
 /.project
 /.includepath
 /.vscode
-/Locale-XGettext*
+/Parse-Wisent-*
 /ReleaseNotes
 /MYMETA.json
 /MYMETA.yml
@@ -16,3 +16,4 @@ _Inline/
 .DS_Store
 /Makefile.old
 /README.pod
+*.output
