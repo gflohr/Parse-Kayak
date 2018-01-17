@@ -11,7 +11,7 @@ designed to work together.
 
 ## Status
 
-Per-alpha, work in progress.
+Pre-alpha, work in progress.
 
 ## Copryight
 
