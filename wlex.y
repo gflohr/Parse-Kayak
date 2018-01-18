@@ -10,6 +10,7 @@ definitions: definition definitions
            ;
 
 definition: name_definition
+          | DEF_CODE
           ;
 
 name_definition: NAME REGEX
@@ -22,19 +23,16 @@ rules: rule rules
      | /* empty */
      ;
 
-rule: start_conditions PATTERN code
+rule: '<' conditions '>' PATTERN code
     | PATTERN code
+    | RULES_CODE
     ;
 
-start_conditions: '<' conditions '>'
-                | /* empty */
-                ;
-
 conditions: IDENT
-          | conditions IDENT
+          | conditions ',' IDENT
           ;
 
-user_code_section: '%%' CODE
+user_code_section: '%%' USER_CODE
                  | /* empty */
                  ;
 %%
