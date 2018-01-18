@@ -10,11 +10,19 @@ definitions: definition definitions
            ;
 
 definition: name_definition
+          | option
           | DEF_CODE
           ;
 
 name_definition: NAME REGEX
                ;
+
+option: OPTION optionlist
+      | valued_option
+      ;
+
+valued_option: OPTION OPTION_OUTFILE '=' NAME
+             ;
 
 rules_section: '%%' rules
              ;
@@ -23,10 +31,15 @@ rules: rule rules
      | /* empty */
      ;
 
-rule: '<' conditions '>' PATTERN code
+rule: '<' conditions '>' PATTERN action
+    | '<' '*' '>' PATTERN action
     | PATTERN code
     | RULES_CODE
     ;
+
+action: ACTION
+      | /* empty */
+      ;
 
 conditions: IDENT
           | conditions ',' IDENT
