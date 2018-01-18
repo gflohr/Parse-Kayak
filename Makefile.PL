@@ -2,12 +2,12 @@
 use strict;
 use warnings;
 
-
+use 5.004;
 
 use ExtUtils::MakeMaker;
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Compiler compiler (bison-style) and lexer (flex-style) for Perl.",
+  "ABSTRACT" => "LALR parser generator and lexical scanner for Perl",
   "AUTHOR" => "Guido Flohr <guido.flohr\@cantanea.com>",
   "BUILD_REQUIRES" => {
     "Module::Build" => "0.28"
@@ -16,11 +16,19 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => 0,
     "Module::Build" => "0.28"
   },
-  "DISTNAME" => "Parse-Wisent",
+  "DISTNAME" => "Parse-Kayak",
+  "EXE_FILES" => [
+    "bin/kalex"
+  ],
   "LICENSE" => "gpl",
-  "NAME" => "Parse::Wisent",
+  "MIN_PERL_VERSION" => "5.004",
+  "NAME" => "Parse::Kayak",
   "PREREQ_PM" => {
-    "strict" => 0
+    "Carp" => 0,
+    "Locale::Messages" => 0,
+    "Parse::Kalex" => 0,
+    "strict" => 0,
+    "vars" => 0
   },
   "TEST_REQUIRES" => {
     "Test::More" => 0
@@ -33,9 +41,13 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "Carp" => 0,
+  "Locale::Messages" => 0,
   "Module::Build" => "0.28",
+  "Parse::Kalex" => 0,
   "Test::More" => 0,
-  "strict" => 0
+  "strict" => 0,
+  "vars" => 0
 );
 
 

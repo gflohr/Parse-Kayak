@@ -7,7 +7,7 @@
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
 ####################################################################
-package Parse::WLex::Parser;
+package Parse::Kalex:Parser;
 use vars qw ( @ISA );
 use strict;
 
@@ -503,31 +503,31 @@ sub new {
 [
 	{#State 0
 		ACTIONS => {
-			"%%" => 2
+			"%%" => 1
 		},
 		GOTOS => {
-			'input_file' => 1,
+			'input_file' => 2,
 			'definitions_section' => 3
 		}
 	},
 	{#State 1
 		ACTIONS => {
-			'' => 4
+			'OPTION' => 11,
+			'DEF_CODE' => 10,
+			'NAME' => 7
+		},
+		DEFAULT => -4,
+		GOTOS => {
+			'name_definition' => 9,
+			'option' => 8,
+			'definitions' => 6,
+			'definition' => 5,
+			'valued_option' => 4
 		}
 	},
 	{#State 2
 		ACTIONS => {
-			'DEF_CODE' => 6,
-			'NAME' => 8,
-			'OPTION' => 9
-		},
-		DEFAULT => -4,
-		GOTOS => {
-			'option' => 12,
-			'definition' => 7,
-			'name_definition' => 11,
-			'definitions' => 5,
-			'valued_option' => 10
+			'' => 12
 		}
 	},
 	{#State 3
@@ -539,68 +539,68 @@ sub new {
 		}
 	},
 	{#State 4
-		DEFAULT => 0
+		DEFAULT => -10
 	},
 	{#State 5
-		DEFAULT => -2
-	},
-	{#State 6
-		DEFAULT => -7
-	},
-	{#State 7
 		ACTIONS => {
-			'NAME' => 8,
-			'DEF_CODE' => 6,
-			'OPTION' => 9
+			'DEF_CODE' => 10,
+			'OPTION' => 11,
+			'NAME' => 7
 		},
 		DEFAULT => -4,
 		GOTOS => {
-			'option' => 12,
-			'definition' => 7,
-			'definitions' => 15,
-			'valued_option' => 10,
-			'name_definition' => 11
+			'option' => 8,
+			'name_definition' => 9,
+			'valued_option' => 4,
+			'definition' => 5,
+			'definitions' => 15
 		}
 	},
-	{#State 8
+	{#State 6
+		DEFAULT => -2
+	},
+	{#State 7
 		ACTIONS => {
 			'REGEX' => 16
 		}
 	},
+	{#State 8
+		DEFAULT => -6
+	},
 	{#State 9
-		ACTIONS => {
-			'optionlist' => 18,
-			'OPTION_OUTFILE' => 17
-		}
-	},
-	{#State 10
-		DEFAULT => -10
-	},
-	{#State 11
 		DEFAULT => -5
 	},
+	{#State 10
+		DEFAULT => -7
+	},
+	{#State 11
+		ACTIONS => {
+			'OPTION_OUTFILE' => 18,
+			'optionlist' => 17
+		}
+	},
 	{#State 12
-		DEFAULT => -6
+		DEFAULT => 0
 	},
 	{#State 13
 		ACTIONS => {
-			"%%" => 19
+			"%%" => 20
 		},
 		DEFAULT => -24,
 		GOTOS => {
-			'user_code_section' => 20
+			'user_code_section' => 19
 		}
 	},
 	{#State 14
 		ACTIONS => {
-			'RULES_CODE' => 25,
-			"<" => 22,
-			'PATTERN' => 21
+			'PATTERN' => 23,
+			'RULES_CODE' => 24,
+			"<" => 21
 		},
 		DEFAULT => -14,
 		GOTOS => {
-			'rules' => 23,
-			'rule' => 24
+			'rule' => 22,
+			'rules' => 25
 		}
 	},
 	{#State 15
@@ -610,52 +610,52 @@ sub new {
 		DEFAULT => -8
 	},
 	{#State 17
+		DEFAULT => -9
+	},
+	{#State 18
 		ACTIONS => {
 			"=" => 26
 		}
 	},
-	{#State 18
-		DEFAULT => -9
-	},
 	{#State 19
+		DEFAULT => -1
+	},
+	{#State 20
 		ACTIONS => {
 			'USER_CODE' => 27
 		}
 	},
-	{#State 20
-		DEFAULT => -1
-	},
 	{#State 21
 		ACTIONS => {
-			'code' => 28
-		}
-	},
-	{#State 22
-		ACTIONS => {
-			'IDENT' => 31,
-			"*" => 29
+			"*" => 28,
+			'IDENT' => 29
 		},
 		GOTOS => {
 			'conditions' => 30
 		}
 	},
-	{#State 23
-		DEFAULT => -12
-	},
-	{#State 24
+	{#State 22
 		ACTIONS => {
-			"<" => 22,
-			'PATTERN' => 21,
-			'RULES_CODE' => 25
+			'PATTERN' => 23,
+			'RULES_CODE' => 24,
+			"<" => 21
 		},
 		DEFAULT => -14,
 		GOTOS => {
-			'rules' => 32,
-			'rule' => 24
+			'rule' => 22,
+			'rules' => 31
 		}
 	},
-	{#State 25
+	{#State 23
+		ACTIONS => {
+			'code' => 32
+		}
+	},
+	{#State 24
 		DEFAULT => -18
+	},
+	{#State 25
+		DEFAULT => -12
 	},
 	{#State 26
 		ACTIONS => {
@@ -666,24 +666,24 @@ sub new {
 		DEFAULT => -23
 	},
 	{#State 28
-		DEFAULT => -17
-	},
-	{#State 29
 		ACTIONS => {
 			">" => 34
 		}
 	},
+	{#State 29
+		DEFAULT => -21
+	},
 	{#State 30
 		ACTIONS => {
-			"," => 35,
-			">" => 36
+			"," => 36,
+			">" => 35
 		}
 	},
 	{#State 31
-		DEFAULT => -21
+		DEFAULT => -13
 	},
 	{#State 32
-		DEFAULT => -13
+		DEFAULT => -17
 	},
 	{#State 33
 		DEFAULT => -11
@@ -695,40 +695,40 @@ sub new {
 	},
 	{#State 35
 		ACTIONS => {
-			'IDENT' => 38
+			'PATTERN' => 38
 		}
 	},
 	{#State 36
 		ACTIONS => {
-			'PATTERN' => 39
+			'IDENT' => 39
 		}
 	},
 	{#State 37
 		ACTIONS => {
-			'ACTION' => 41
+			'ACTION' => 40
 		},
 		DEFAULT => -20,
 		GOTOS => {
-			'action' => 40
+			'action' => 41
 		}
 	},
 	{#State 38
-		DEFAULT => -22
-	},
-	{#State 39
 		ACTIONS => {
-			'ACTION' => 41
+			'ACTION' => 40
 		},
 		DEFAULT => -20,
 		GOTOS => {
 			'action' => 42
 		}
 	},
+	{#State 39
+		DEFAULT => -22
+	},
 	{#State 40
-		DEFAULT => -16
+		DEFAULT => -19
 	},
 	{#State 41
-		DEFAULT => -19
+		DEFAULT => -16
 	},
 	{#State 42
 		DEFAULT => -15
@@ -816,7 +816,7 @@ sub new {
     bless($self,$class);
 }
 
-#line 51 "wlex.y"
+#line 51 "kalex.y"
 
 
 1;

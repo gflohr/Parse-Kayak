@@ -14,18 +14,26 @@ my %module_build_args = (
     "ExtUtils::MakeMaker" => 0,
     "Module::Build" => "0.28"
   },
-  "dist_abstract" => "Compiler compiler (bison-style) and lexer (flex-style) for Perl.",
+  "dist_abstract" => "LALR parser generator and lexical scanner for Perl",
   "dist_author" => [
     "Guido Flohr <guido.flohr\@cantanea.com>"
   ],
-  "dist_name" => "Parse-Wisent",
+  "dist_name" => "Parse-Kayak",
   "dist_version" => "0.1",
   "license" => "gpl",
-  "module_name" => "Parse::Wisent",
+  "module_name" => "Parse::Kayak",
   "recursive_test_files" => 1,
   "requires" => {
-    "strict" => 0
+    "Carp" => 0,
+    "Locale::Messages" => 0,
+    "Parse::Kalex" => 0,
+    "perl" => "5.004",
+    "strict" => 0,
+    "vars" => 0
   },
+  "script_files" => [
+    "bin/kalex"
+  ],
   "test_requires" => {
     "Test::More" => 0
   }

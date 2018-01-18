@@ -1,3 +1,5 @@
+#! /bin/false
+
 # Copyright (C) 2018 Guido Flohr <guido.flohr@cantanea.com>,
 # all rights reserved.
 
@@ -14,14 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# ABSTRACT: LALR parser generator and lexical scanner for Perl
 use strict;
 
-use Test::More tests => 4;
+sub new {
+    bless {}, shift;
+}
 
-ok require Parse::Kayak;
-my $parser = Parse::Kayak->new;
-ok $parser;
-ok ref $parser;
-ok $parser->isa('Parse::Kayak');
-
-
+1;

@@ -1,7 +1,7 @@
-# Parse-Wisent
+# Parse-Kayak
 
-Wisent is a compiler compiler for Perl.  It includes both a lexer (`wlex`) and
-parser generator (`wisent`) designed to work together.
+Kayak is a compiler compiler for Perl.  It includes both a lexer (`kalex`) and
+parser generator (`kayak`) designed to work together.
 
 ## Description
 

@@ -1,3 +1,5 @@
+#! /usr/bin/env perl
+
 # Copyright (C) 2018 Guido Flohr <guido.flohr@cantanea.com>,
 # all rights reserved.
 
@@ -16,12 +18,9 @@
 
 use strict;
 
-use Test::More tests => 4;
+use Locale::Messages qw(setlocale LC_MESSAGES);
 
-ok require Parse::Kayak;
-my $parser = Parse::Kayak->new;
-ok $parser;
-ok ref $parser;
-ok $parser->isa('Parse::Kayak');
+use Parse::Kalex;
 
-
+setlocale(LC_MESSAGES, '');
+Parse::Kalex->newFromArgv(\@ARGV)->run;

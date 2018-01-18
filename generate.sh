@@ -2,4 +2,4 @@
 
 YAPP=${YAPP:-yapp}
 
-$YAPP -v -m Parse::WLex::Parser -s -o lib/Parse/WLex/Parser.pm wlex.y
+$YAPP -v -m Parse::Kalex:Parser -s -o lib/Parse/Kalex/Parser.pm kalex.y

@@ -1,10 +1,10 @@
 # NAME
 
-Parse::Wisent - Base class for wisent parsers
+Parse::Kayak - Base class for kayak parsers
 
 # SYNOPSIS
 
-    $parser = Parse::Wisent->new;
+    $parser = Parse::Kayak->new;
 
 # DESCRIPTION
 
@@ -23,4 +23,4 @@ all rights reserved.
 
 # SEE ALSO
 
-wisent(1), perl(1)
+kayak(1), perl(1)
