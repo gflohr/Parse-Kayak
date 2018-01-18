@@ -503,72 +503,161 @@ sub new {
 [
 	{#State 0
 		ACTIONS => {
-			'NAME' => 5
+			"%%" => 1
 		},
-		DEFAULT => -4,
 		GOTOS => {
-			'input_file' => 3,
-			'name_definition' => 1,
-			'definitions' => 2,
-			'definition' => 4
+			'definitions_section' => 3,
+			'input_file' => 2
 		}
 	},
 	{#State 1
-		DEFAULT => -5
+		ACTIONS => {
+			'NAME' => 7
+		},
+		DEFAULT => -4,
+		GOTOS => {
+			'definitions' => 4,
+			'definition' => 5,
+			'name_definition' => 6
+		}
 	},
 	{#State 2
 		ACTIONS => {
-			"%%" => 6
+			'' => 8
 		}
 	},
 	{#State 3
 		ACTIONS => {
-			'' => 7
+			"%%" => 10
+		},
+		GOTOS => {
+			'rules_section' => 9
 		}
 	},
 	{#State 4
-		ACTIONS => {
-			'NAME' => 5
-		},
-		DEFAULT => -4,
-		GOTOS => {
-			'name_definition' => 1,
-			'definitions' => 8,
-			'definition' => 4
-		}
+		DEFAULT => -2
 	},
 	{#State 5
 		ACTIONS => {
-			'REGEX' => 9
+			'NAME' => 7
+		},
+		DEFAULT => -4,
+		GOTOS => {
+			'definition' => 5,
+			'definitions' => 11,
+			'name_definition' => 6
 		}
 	},
 	{#State 6
-		ACTIONS => {
-			'rules' => 10
-		}
+		DEFAULT => -5
 	},
 	{#State 7
-		DEFAULT => 0
+		ACTIONS => {
+			'REGEX' => 12
+		}
 	},
 	{#State 8
-		DEFAULT => -3
+		DEFAULT => 0
 	},
 	{#State 9
-		DEFAULT => -6
+		ACTIONS => {
+			"%%" => 14
+		},
+		DEFAULT => -17,
+		GOTOS => {
+			'user_code_section' => 13
+		}
 	},
 	{#State 10
 		ACTIONS => {
-			"%%" => 11
+			"<" => 17,
+			'PATTERN' => 19
 		},
-		DEFAULT => -1
-	},
-	{#State 11
-		ACTIONS => {
-			'user_code' => 12
+		DEFAULT => -9,
+		GOTOS => {
+			'start_conditions' => 18,
+			'rule' => 16,
+			'rules' => 15
 		}
 	},
+	{#State 11
+		DEFAULT => -3
+	},
 	{#State 12
-		DEFAULT => -2
+		DEFAULT => -6
+	},
+	{#State 13
+		DEFAULT => -1
+	},
+	{#State 14
+		ACTIONS => {
+			'CODE' => 20
+		}
+	},
+	{#State 15
+		DEFAULT => -7
+	},
+	{#State 16
+		ACTIONS => {
+			'PATTERN' => 19,
+			"<" => 17
+		},
+		DEFAULT => -9,
+		GOTOS => {
+			'start_conditions' => 18,
+			'rule' => 16,
+			'rules' => 21
+		}
+	},
+	{#State 17
+		ACTIONS => {
+			'IDENT' => 22
+		},
+		GOTOS => {
+			'conditions' => 23
+		}
+	},
+	{#State 18
+		ACTIONS => {
+			'PATTERN' => 24
+		}
+	},
+	{#State 19
+		ACTIONS => {
+			'code' => 25
+		}
+	},
+	{#State 20
+		DEFAULT => -16
+	},
+	{#State 21
+		DEFAULT => -8
+	},
+	{#State 22
+		DEFAULT => -14
+	},
+	{#State 23
+		ACTIONS => {
+			">" => 26,
+			'IDENT' => 27
+		}
+	},
+	{#State 24
+		ACTIONS => {
+			'code' => 28
+		}
+	},
+	{#State 25
+		DEFAULT => -11
+	},
+	{#State 26
+		DEFAULT => -12
+	},
+	{#State 27
+		DEFAULT => -15
+	},
+	{#State 28
+		DEFAULT => -10
 	}
 ],
                                   yyrules  =>
@@ -580,7 +669,7 @@ sub new {
 		 'input_file', 3, undef
 	],
 	[#Rule 2
-		 'input_file', 5, undef
+		 'definitions_section', 2, undef
 	],
 	[#Rule 3
 		 'definitions', 2, undef
@@ -593,13 +682,46 @@ sub new {
 	],
 	[#Rule 6
 		 'name_definition', 2, undef
+	],
+	[#Rule 7
+		 'rules_section', 2, undef
+	],
+	[#Rule 8
+		 'rules', 2, undef
+	],
+	[#Rule 9
+		 'rules', 0, undef
+	],
+	[#Rule 10
+		 'rule', 3, undef
+	],
+	[#Rule 11
+		 'rule', 2, undef
+	],
+	[#Rule 12
+		 'start_conditions', 3, undef
+	],
+	[#Rule 13
+		 'start_conditions', 0, undef
+	],
+	[#Rule 14
+		 'conditions', 1, undef
+	],
+	[#Rule 15
+		 'conditions', 2, undef
+	],
+	[#Rule 16
+		 'user_code_section', 2, undef
+	],
+	[#Rule 17
+		 'user_code_section', 0, undef
 	]
 ],
                                   @_);
     bless($self,$class);
 }
 
-#line 15 "wlex.yp"
+#line 40 "wlex.y"
 
 
 1;
