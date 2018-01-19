@@ -22,13 +22,15 @@ use IO::Handle;
 
 use constant YYEOF => ('', undef);
 
+my $IDENT = '[_a-zA-Z][_a-zA-Z0-9]*';
+
 sub new {
     my ($class, $options, @input_files) = @_;
 
     @input_files = ('') if !@input_files;
     my $self = {
-        __options => {%$options},
-        __input_files => \@input_files,
+        __yyoptions => {%$options},
+        yyinput_files => \@input_files,
     };
 
     bless $self, $class;
@@ -59,105 +61,212 @@ sub newFromArgv {
     return $class->new(\%options, @$argv);
 }
 
-sub __updateLocation {
-    my ($self, $consumed) = @_;
+sub YYPUSH {
+    my ($self, $state) = @_;
 
-    if (defined $self->{__last}) {
-        if ($self->{__last} =~ s/(.*\n)//m) {
-            $self->{__lineno} += $1 =~ y/\n/\n/;
-        }
-        $self->{__charno} += length $self->{__last};
-    };
-    $self->{__last} = $self->{__current};
-    $self->{__current} = $consumed;
+    $self->__yyvalidateStartCondition($state);
+    push @{$self->{__yystate}}, $state;
 
     return $self;
 }
 
-sub __consumeWhitespace {
+sub YYPOP {
     my ($self) = @_;
 
-    if ($self->{__input} =~ s/^([ \011-\015]+)//) {
-        $self->__updateLocation($1);
+    pop @{$self->{__yystate}}
+        or $self->fatal(__"POP called but start condition stack is empty!\n");
+
+    return $self;
+}
+
+sub YYBEGIN {
+    my ($self, $state) = @_;
+
+    $self->__yyvalidateStartCondition($state);
+    $self->{__yystate} = [$state];
+
+    return $self;
+}
+
+# We do not keep track of the current location.  Instead we calculate it
+# only on demand by looking at the current token and the input that has not
+# yet been consumed.  Under normal circumstances, this is a lot more efficient
+# than constantly tracking the cursor inside the input streams.
+sub yylocation {
+    my ($self) = @_;
+
+    my $rem = "$self->{__yytext}$self->{__yyinput}";
+    my $rem_length = length $rem;
+
+    my $location;
+    foreach my $record (reverse @{$self->{__yylocations}}) {
+        my ($filename, $length, $lengths) = @$record;
+        if ($rem_length > $length) {
+            $rem_length -= $length;
+        } else {
+            $location = $record;
+            last;
+        }
+    }
+
+    die "should not happen" if !$location;
+
+    my ($filename, undef, $lengths) = @$location;
+    my $lineno = @$lengths;
+    my $charno = 1;
+    foreach my $length (reverse @$lengths) {
+        if ($rem_length > $length) {
+            --$lineno;
+            $rem_length -= $length;
+        } else {
+            $charno = 1 + $length - $rem_length;
+            last;
+        }
+    }
+
+    return wantarray ? ($filename, $lineno, $charno)
+                     : join ':', $filename, $lineno, $charno;
+}
+
+sub __yyvalidateStartCondition {
+    my ($self, $state) = @_;
+
+    if (!defined $state || !length $state) {
+        $self->fatal(__x("undefined start condition",
+                        condition => $self->{__state}->[-1]));        
+    }
+
+    my $method = '__yylex' . $state;
+    if (!$self->can($method)) {
+        $self->fatal(__x("unknown start condition '{condition}'",
+                        condition => $self->{__state}->[-1]));
+    }
+
+    return $method;
+}
+
+sub __yyconsumeWhitespace {
+    my ($self, $allow_newline) = @_;
+
+    if ($allow_newline) {
+        $self->{__yytext} =~ s/^([ \011-\015]+)//o;
+    } else {
+        $self->{__yyinput} =~ s/^([ \011\013-\015]+)//o;
     }
 
     return $self;
 }
 
-sub __nextChar {
+sub __yynextChar {
     my ($self) = @_;
 
-    if ($self->{__input} =~ s/^(.)//) {
-        return 'ERROR', $1;
+    if ($self->{__input} =~ s/^(.)//o) {
+        return $1, $1;
     }
 
     return YYEOF;
 }
 
+sub __yylexCONDITIONS {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
+        return IDENT => $1;
+    } elsif ($self->{__yyinput} =~ s/^\*//o) {
+        return '*', '*',
+    } elsif ($self->{__yyinput} =~ s/^,//o) {
+        return ',', ',';
+    } elsif ($self->{__yyinput} =~ s/^>//o) {
+        return '>', '>';
+    } elsif ($self->{__yyinput} =~ s/^\n//o) {
+        $self->YYPOP;
+        return NEWLINE => "\n";
+    }
+
+    return $self->__yynextChar;
+}
+
 sub __yylexINITIAL {
     my ($self) = @_;
 
-    $self->__consumeWhitespace;
-
-    if ($self->{__input} =~ s/^(%%)//) {
+    if ($self->{__yyinput} =~ s/^(%%)//o) {
         return SEPARATOR => $1;
+    } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
+        $self->YYPUSH('CONDITIONS');
+        return SC => $1;
     }
 
-    return $self->__nextChar;
+    return $self->__yynextChar;
 }
 
 sub __yylex {
     my ($self) = @_;
 
-    if (!length $self->{__input}) {
-        my $filename = shift @{$self->{__todo}};
-        return YYEOF if !defined $filename;
+    if (!exists $self->{__yyinput}) {
+        my $encoding = $self->{__yyoptions}->{encoding};
+        binmode STDOUT, ":encoding($encoding)";
+        binmode STDERR, ":encoding($encoding)";
 
-        my $fh;
-        my $encoding = $self->{__options}->{encoding};
-        if (!length $filename) {
-            $filename = __"<standard input>";
-            binmode STDIN, ":$self->{__options}->{encoding}";
-            $fh = \*STDIN;
+        my @filenames = @{$self->{__yyinput_files}};
+        my @locations;
+        my $input = '';
+
+        if (!@filenames) {
+            @filenames = (__"<standard input>");
+            binmode STDIN, ":encoding($encoding)";
+            my @lengths;
+            while (defined (my $line = <STDIN>)) {
+                $input .= $line;
+                push @lengths, length $line;
+            }
+            push @lengths, 0 if $input =~ /\n$/;
+            push @locations, [__"<standard input>", length $input, \@lengths];
         } else {
-            open $fh, "<:encoding($encoding)", $filename
-                or $self->__fatal(__x("error opening '{filename}' for"
-                                      . " reading: {error}!",
-                                      filename => $filename, error => $!));
+            foreach my $filename (@filenames) {
+                open my $fh, "<:encoding($encoding)", $filename
+                or $self->__yyfatal(__x("error opening '{filename}' for"
+                                        . " reading: {error}!",
+                                        filename => $filename, error => $!));
+                my @lengths;
+                my $chunk = '';
+                while (defined(my $line = $fh->getline)) {
+                    $chunk .= $line;
+                    push @lengths, length $line;
+                }
+                push @lengths, 0 if $chunk =~ /\n$/;
+                push @locations, [$filename, length $chunk, \@lengths];
+                $input .= $chunk;
+            }
         }
 
-        $self->{__filename} = $filename;
-        $self->{__lineno} = 1;
-        $self->{__charno} = 1;
-        $self->{__input} = join '', $fh->getlines;
-        $self->{__state} = ['INITIAL'];
+        $self->{__yyinput} = $input;
+        $self->{__yylocations} = \@locations;
+
+        $self->{__yystate} = ['INITIAL'];
     }
 
-    my $method = '__yylex' . $self->{__state}->[-1];
+    my $method = $self->__yyvalidateStartCondition($self->{__yystate}->[-1]);
+    
+    my ($token, $yytext) = $self->$method;
 
-    my ($token, $consumed) = $self->$method;
-    $self->__updateLocation($consumed);
-    if (!defined $consumed && @{$self->{__todo}}) {
-        # Next input file.
-        return $self->{__yylex};
-    }
+    $self->{yytext} = $self->{__yytext} = $yytext;
 
-    return $token, $consumed;
+    return $token, $yytext;
 }
 
 sub __yyerror {
     my ($self) = @_;
 
-    if (defined $self->{__current}) {
-        warn __x("{filename}:{lineno}:{charno}: syntax error at or near"
-                 . " '{token}'.\n",
-                 filename => $self->{__filename}, lineno => $self->{__lineno},
-                 charno => $self->{__charno}, token => $self->{__current});
+    my $location = $self->yylocation;
+
+    if (defined $self->{__yytext}) {
+        warn __x("{location}: syntax error near '{token}'.\n",
+                 location => $location, token => $self->{__yytext});
     } else {
-        warn __x("{filename}:{lineno}:{charno}: syntax error at beginning"
-                 . " of input.\n",
-                 filename => $self->{__filename}, lineno => $self->{__lineno},
-                 charno => $self->{__charno}, token => $self->{__current});
+        warn __x("{location}: syntax error at beginning of input.\n",
+                 location => $location, token => $self->{__yytext});
     }
 
     return $self;
@@ -174,10 +283,8 @@ sub run {
         return $self->__yyerror;
     };
 
-    my @input_files = @{$self->{__input_files}};
-    $self->{__todo} = \@input_files;
-    $self->{__input} = '';
-    delete $self->{__last};
+    my @input_files = @{$self->{yyinput_files}};
+    $self->{__yyinput_files} = \@input_files;
 
     my $parser = Parse::Kalex::Parser->new;
     

@@ -10,12 +10,16 @@ definitions: definition definitions
            ;
 
 definition: name_definition
+          | sc_definition
           | option
           | DEF_CODE
           ;
 
 name_definition: NAME REGEX
                ;
+
+sc_definition: SC conditions NEWLINE
+             ;
 
 option: OPTION optionlist
       | valued_option
