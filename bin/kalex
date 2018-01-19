@@ -16,4 +16,4 @@ use Locale::Messages qw(setlocale LC_MESSAGES);
 use Parse::Kalex;
 
 setlocale(LC_MESSAGES, '');
-Parse::Kalex->newFromArgv(\@ARGV)->run;
+Parse::Kalex->newFromArgv(\@ARGV)->run->output;
