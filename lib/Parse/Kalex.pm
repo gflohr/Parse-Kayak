@@ -100,7 +100,7 @@ sub __yylexINITIAL {
     $self->__consumeWhitespace;
 
     if ($self->{__input} =~ s/^(%%)//) {
-        return $1, $1;
+        return SEPARATOR => $1;
     }
 
     return $self->__nextChar;

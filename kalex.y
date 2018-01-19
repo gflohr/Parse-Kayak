@@ -24,7 +24,7 @@ option: OPTION optionlist
 valued_option: OPTION OPTION_OUTFILE '=' NAME
              ;
 
-rules_section: '%%' rules
+rules_section: SEPARATOR rules
              ;
 
 rules: rule rules 
@@ -45,7 +45,7 @@ conditions: IDENT
           | conditions ',' IDENT
           ;
 
-user_code_section: '%%' USER_CODE
+user_code_section: SEPARATOR USER_CODE
                  | /* empty */
                  ;
 %%
