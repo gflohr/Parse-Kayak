@@ -74,7 +74,7 @@ sub YYPOP {
     my ($self) = @_;
 
     pop @{$self->{__yystate}}
-        or $self->fatal(__"POP called but start condition stack is empty!\n");
+        or $self->__yyfatal(__"POP called but start condition stack is empty!\n");
 
     return $self;
 }
@@ -132,14 +132,14 @@ sub __yyvalidateStartCondition {
     my ($self, $state) = @_;
 
     if (!defined $state || !length $state) {
-        $self->fatal(__x("undefined start condition",
-                        condition => $self->{__state}->[-1]));        
+        $self->__yyfatal(__x("undefined start condition",
+                             condition => $state));        
     }
 
     my $method = '__yylex' . $state;
     if (!$self->can($method)) {
-        $self->fatal(__x("unknown start condition '{condition}'",
-                        condition => $self->{__state}->[-1]));
+        $self->__yyfatal(__x("unknown start condition '{condition}'",
+                             condition => $state));
     }
 
     return $method;
@@ -149,18 +149,18 @@ sub __yyconsumeWhitespace {
     my ($self, $allow_newline) = @_;
 
     if ($allow_newline) {
-        $self->{__yytext} =~ s/^([ \011-\015]+)//o;
+        $self->{__yyinput} =~ s/^([ \011-\015]+)//o;
     } else {
         $self->{__yyinput} =~ s/^([ \011\013-\015]+)//o;
     }
 
-    return $self;
+    return $1;
 }
 
 sub __yynextChar {
     my ($self) = @_;
 
-    if ($self->{__input} =~ s/^(.)//o) {
+    if ($self->{__yyinput} =~ s/^(.)//o) {
         return $1, $1;
     }
 
@@ -217,10 +217,50 @@ sub __yylexFIRST_CONDITION_DECLS {
     return $self->__yynextChar;
 }
 
+sub __yylexCONDITIONS {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
+        return IDENT => $1;
+    } elsif ($self->{__yyinput} =~ s/^\*//o) {
+        return '*', '*',
+    } elsif ($self->{__yyinput} =~ s/^,//o) {
+        return ',', ',';
+    } elsif ($self->{__yyinput} =~ s/^>//o) {
+        $self->YYPOP;
+        return '>', '>';
+    }
+
+    return $self->__yynextChar;
+}
+
+sub __yylexRULES {
+    my ($self) = @_;
+
+    my ($whitespace) = $self->__yyconsumeWhitespace(1);
+    if (defined $whitespace) {
+        # FIXME! This is code!
+    }
+
+    if ($self->{__yyinput} =~ s/^<//o) {
+        $self->YYPUSH('CONDITIONS');
+        return '<', '<';
+    } elsif ($self->{__yyinput} =~ s/^%%//o) {
+        $self->YYPOP;
+        #$self->YYPUSH('USER_CODE');
+        return SEPARATOR => '%%';
+    }
+
+    return $self->__yynextChar;
+}
+
 sub __yylexINITIAL {
     my ($self) = @_;
 
     if ($self->{__yyinput} =~ s/^(%%)//o) {
+        $self->YYPUSH('RULES');
         return SEPARATOR => $1;
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
         $self->YYPUSH('FIRST_CONDITION_DECLS');
@@ -348,8 +388,8 @@ sub __getOptions {
     );
 
     if ($options{encoding} =~ /[\\\)]/) {
-        $self->__fatal(__x("invalid encoding '{encoding}'!",
-                           encoding => $options{encoding}));
+        $self->__yyfatal(__x("invalid encoding '{encoding}'!",
+                             encoding => $options{encoding}));
     }
 
     return %options;
@@ -451,7 +491,7 @@ sub __usageError {
                        program_name => $self->programName);
 }
 
-sub __fatal {
+sub __yyfatal {
     my ($self, $message) = @_;
 
     $message =~ s/\s+$//;
