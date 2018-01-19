@@ -167,12 +167,12 @@ sub __yynextChar {
     return YYEOF;
 }
 
-sub __yylexCONDITIONS {
+sub __yylexCONDITION_DECLS {
     my ($self) = @_;
 
-    $self->__yyconsumeWhitespace;
-
-    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
+    if ($self->{__yyinput} =~ s/^([ \011\013-\015]+)//o) {
+        return WS => $1;
+    } elsif ($self->{__yyinput} =~ s/^(${IDENT})//o) {
         return IDENT => $1;
     } elsif ($self->{__yyinput} =~ s/^\*//o) {
         return '*', '*',
@@ -188,13 +188,42 @@ sub __yylexCONDITIONS {
     return $self->__yynextChar;
 }
 
+sub __yylexFIRST_CONDITION_DECLS {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
+        $self->YYPOP;
+        $self->YYPUSH('CONDITION_DECLS');
+        return IDENT => $1;
+    } elsif ($self->{__yyinput} =~ s/^\*//o) {
+        $self->YYPOP;
+        $self->YYPUSH('CONDITION_DECLS');
+        return '*', '*',
+    } elsif ($self->{__yyinput} =~ s/^,//o) {
+        $self->YYPOP;
+        $self->YYPUSH('CONDITION_DECLS');
+        return ',', ',';
+    } elsif ($self->{__yyinput} =~ s/^>//o) {
+        $self->YYPOP;
+        $self->YYPUSH('CONDITION_DECLS');
+        return '>', '>';
+    } elsif ($self->{__yyinput} =~ s/^\n//o) {
+        $self->YYPOP;
+        return NEWLINE => "\n";
+    }
+
+    return $self->__yynextChar;
+}
+
 sub __yylexINITIAL {
     my ($self) = @_;
 
     if ($self->{__yyinput} =~ s/^(%%)//o) {
         return SEPARATOR => $1;
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
-        $self->YYPUSH('CONDITIONS');
+        $self->YYPUSH('FIRST_CONDITION_DECLS');
         return SC => $1;
     }
 

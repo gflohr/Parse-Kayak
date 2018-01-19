@@ -18,7 +18,7 @@ definition: name_definition
 name_definition: NAME REGEX
                ;
 
-sc_definition: SC conditions NEWLINE
+sc_definition: SC conditions_space NEWLINE
              ;
 
 option: OPTION optionlist
@@ -35,7 +35,7 @@ rules: rule rules
      | /* empty */
      ;
 
-rule: '<' conditions '>' PATTERN action
+rule: '<' conditions_comma '>' PATTERN action
     | '<' '*' '>' PATTERN action
     | PATTERN code
     | RULES_CODE
@@ -45,8 +45,12 @@ action: ACTION
       | /* empty */
       ;
 
-conditions: IDENT
-          | conditions ',' IDENT
+conditions_comma: IDENT
+          | conditions_comma ',' IDENT
+          ;
+
+conditions_space: IDENT
+          | conditions_space WS IDENT
           ;
 
 user_code_section: SEPARATOR USER_CODE
