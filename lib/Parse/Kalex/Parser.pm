@@ -7,7 +7,7 @@
 #             ANY CHANGE MADE HERE WILL BE LOST !
 #
 ####################################################################
-package Parse::Kalex:Parser;
+package Parse::Kalex::Parser;
 use vars qw ( @ISA );
 use strict;
 
@@ -503,190 +503,188 @@ sub new {
 [
 	{#State 0
 		ACTIONS => {
-			"%%" => 1
-		},
-		GOTOS => {
-			'input_file' => 2,
-			'definitions_section' => 3
-		}
-	},
-	{#State 1
-		ACTIONS => {
-			'OPTION' => 11,
-			'DEF_CODE' => 10,
-			'NAME' => 7
+			'NAME' => 7,
+			'OPTION' => 9,
+			'DEF_CODE' => 1
 		},
 		DEFAULT => -4,
 		GOTOS => {
-			'name_definition' => 9,
-			'option' => 8,
-			'definitions' => 6,
 			'definition' => 5,
-			'valued_option' => 4
+			'input_file' => 6,
+			'option' => 4,
+			'definitions_section' => 10,
+			'valued_option' => 8,
+			'definitions' => 2,
+			'name_definition' => 3
 		}
 	},
+	{#State 1
+		DEFAULT => -7
+	},
 	{#State 2
+		DEFAULT => -2
+	},
+	{#State 3
+		DEFAULT => -5
+	},
+	{#State 4
+		DEFAULT => -6
+	},
+	{#State 5
+		ACTIONS => {
+			'OPTION' => 9,
+			'NAME' => 7,
+			'DEF_CODE' => 1
+		},
+		DEFAULT => -4,
+		GOTOS => {
+			'definitions' => 11,
+			'name_definition' => 3,
+			'option' => 4,
+			'definition' => 5,
+			'valued_option' => 8
+		}
+	},
+	{#State 6
 		ACTIONS => {
 			'' => 12
 		}
 	},
-	{#State 3
-		ACTIONS => {
-			"%%" => 14
-		},
-		GOTOS => {
-			'rules_section' => 13
-		}
-	},
-	{#State 4
-		DEFAULT => -10
-	},
-	{#State 5
-		ACTIONS => {
-			'DEF_CODE' => 10,
-			'OPTION' => 11,
-			'NAME' => 7
-		},
-		DEFAULT => -4,
-		GOTOS => {
-			'option' => 8,
-			'name_definition' => 9,
-			'valued_option' => 4,
-			'definition' => 5,
-			'definitions' => 15
-		}
-	},
-	{#State 6
-		DEFAULT => -2
-	},
 	{#State 7
 		ACTIONS => {
-			'REGEX' => 16
+			'REGEX' => 13
 		}
 	},
 	{#State 8
-		DEFAULT => -6
+		DEFAULT => -10
 	},
 	{#State 9
-		DEFAULT => -5
+		ACTIONS => {
+			'OPTION_OUTFILE' => 14,
+			'optionlist' => 15
+		}
 	},
 	{#State 10
-		DEFAULT => -7
+		ACTIONS => {
+			"%%" => 16
+		},
+		GOTOS => {
+			'rules_section' => 17
+		}
 	},
 	{#State 11
-		ACTIONS => {
-			'OPTION_OUTFILE' => 18,
-			'optionlist' => 17
-		}
+		DEFAULT => -3
 	},
 	{#State 12
 		DEFAULT => 0
 	},
 	{#State 13
-		ACTIONS => {
-			"%%" => 20
-		},
-		DEFAULT => -24,
-		GOTOS => {
-			'user_code_section' => 19
-		}
+		DEFAULT => -8
 	},
 	{#State 14
 		ACTIONS => {
-			'PATTERN' => 23,
-			'RULES_CODE' => 24,
-			"<" => 21
-		},
-		DEFAULT => -14,
-		GOTOS => {
-			'rule' => 22,
-			'rules' => 25
+			"=" => 18
 		}
 	},
 	{#State 15
-		DEFAULT => -3
+		DEFAULT => -9
 	},
 	{#State 16
-		DEFAULT => -8
+		ACTIONS => {
+			'PATTERN' => 21,
+			"<" => 23,
+			'RULES_CODE' => 22
+		},
+		DEFAULT => -14,
+		GOTOS => {
+			'rules' => 19,
+			'rule' => 20
+		}
 	},
 	{#State 17
-		DEFAULT => -9
+		ACTIONS => {
+			"%%" => 25
+		},
+		DEFAULT => -24,
+		GOTOS => {
+			'user_code_section' => 24
+		}
 	},
 	{#State 18
 		ACTIONS => {
-			"=" => 26
+			'NAME' => 26
 		}
 	},
 	{#State 19
-		DEFAULT => -1
+		DEFAULT => -12
 	},
 	{#State 20
 		ACTIONS => {
-			'USER_CODE' => 27
+			'PATTERN' => 21,
+			'RULES_CODE' => 22,
+			"<" => 23
+		},
+		DEFAULT => -14,
+		GOTOS => {
+			'rules' => 27,
+			'rule' => 20
 		}
 	},
 	{#State 21
 		ACTIONS => {
-			"*" => 28,
+			'code' => 28
+		}
+	},
+	{#State 22
+		DEFAULT => -18
+	},
+	{#State 23
+		ACTIONS => {
+			"*" => 31,
 			'IDENT' => 29
 		},
 		GOTOS => {
 			'conditions' => 30
 		}
 	},
-	{#State 22
-		ACTIONS => {
-			'PATTERN' => 23,
-			'RULES_CODE' => 24,
-			"<" => 21
-		},
-		DEFAULT => -14,
-		GOTOS => {
-			'rule' => 22,
-			'rules' => 31
-		}
-	},
-	{#State 23
-		ACTIONS => {
-			'code' => 32
-		}
-	},
 	{#State 24
-		DEFAULT => -18
+		DEFAULT => -1
 	},
 	{#State 25
-		DEFAULT => -12
+		ACTIONS => {
+			'USER_CODE' => 32
+		}
 	},
 	{#State 26
-		ACTIONS => {
-			'NAME' => 33
-		}
+		DEFAULT => -11
 	},
 	{#State 27
-		DEFAULT => -23
+		DEFAULT => -13
 	},
 	{#State 28
-		ACTIONS => {
-			">" => 34
-		}
+		DEFAULT => -17
 	},
 	{#State 29
 		DEFAULT => -21
 	},
 	{#State 30
 		ACTIONS => {
-			"," => 36,
-			">" => 35
+			"," => 33,
+			">" => 34
 		}
 	},
 	{#State 31
-		DEFAULT => -13
+		ACTIONS => {
+			">" => 35
+		}
 	},
 	{#State 32
-		DEFAULT => -17
+		DEFAULT => -23
 	},
 	{#State 33
-		DEFAULT => -11
+		ACTIONS => {
+			'IDENT' => 36
+		}
 	},
 	{#State 34
 		ACTIONS => {
@@ -699,39 +697,34 @@ sub new {
 		}
 	},
 	{#State 36
-		ACTIONS => {
-			'IDENT' => 39
-		}
+		DEFAULT => -22
 	},
 	{#State 37
 		ACTIONS => {
-			'ACTION' => 40
+			'ACTION' => 39
+		},
+		DEFAULT => -20,
+		GOTOS => {
+			'action' => 40
+		}
+	},
+	{#State 38
+		ACTIONS => {
+			'ACTION' => 39
 		},
 		DEFAULT => -20,
 		GOTOS => {
 			'action' => 41
 		}
 	},
-	{#State 38
-		ACTIONS => {
-			'ACTION' => 40
-		},
-		DEFAULT => -20,
-		GOTOS => {
-			'action' => 42
-		}
-	},
 	{#State 39
-		DEFAULT => -22
+		DEFAULT => -19
 	},
 	{#State 40
-		DEFAULT => -19
+		DEFAULT => -15
 	},
 	{#State 41
 		DEFAULT => -16
-	},
-	{#State 42
-		DEFAULT => -15
 	}
 ],
                                   yyrules  =>
@@ -743,7 +736,7 @@ sub new {
 		 'input_file', 3, undef
 	],
 	[#Rule 2
-		 'definitions_section', 2, undef
+		 'definitions_section', 1, undef
 	],
 	[#Rule 3
 		 'definitions', 2, undef

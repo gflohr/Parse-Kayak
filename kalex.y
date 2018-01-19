@@ -2,7 +2,7 @@
 input_file: definitions_section rules_section user_code_section
           ;
 
-definitions_section: '%%' definitions
+definitions_section: definitions
                    ;
 
 definitions: definition definitions
