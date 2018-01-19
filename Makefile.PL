@@ -20,7 +20,7 @@ my %WriteMakefileArgs = (
   "EXE_FILES" => [
     "bin/kalex"
   ],
-  "LICENSE" => "gpl",
+  "LICENSE" => "unrestricted",
   "MIN_PERL_VERSION" => "5.004",
   "NAME" => "Parse::Kayak",
   "PREREQ_PM" => {

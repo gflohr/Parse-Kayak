@@ -1,4 +1,4 @@
-#! /usr/bin/env perl
+#! /bin/false
 
 # Copyright (C) 2018 Guido Flohr <guido.flohr@cantanea.com>,
 # all rights reserved.
@@ -9,11 +9,12 @@
 # to Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
 
+# ABSTRACT: LALR parser generator and lexical scanner for Perl
+
 use strict;
 
-use Locale::Messages qw(setlocale LC_MESSAGES);
+sub new {
+    bless {}, shift;
+}
 
-use Parse::Kalex;
-
-setlocale(LC_MESSAGES, '');
-Parse::Kalex->newFromArgv(\@ARGV)->run;
+1;

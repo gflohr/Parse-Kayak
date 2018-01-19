@@ -20,7 +20,7 @@ my %module_build_args = (
   ],
   "dist_name" => "Parse-Kayak",
   "dist_version" => "0.1",
-  "license" => "gpl",
+  "license" => "unrestricted",
   "module_name" => "Parse::Kayak",
   "recursive_test_files" => 1,
   "requires" => {
