@@ -19,6 +19,7 @@ use Locale::TextDomain qw(kayak);
 use Getopt::Long 2.36 qw(GetOptionsFromArray);
 use Parse::Kalex::Parser;
 use IO::Handle;
+use PPI::Tokenizer;
 
 use constant YYEOF => ('', undef);
 
@@ -239,7 +240,31 @@ sub __yylexCONDITIONS {
 }
 
 sub __yylexACTION {
-    die;
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^\n//o) {
+        # No action.
+        $self->YYPOP();
+        return ACTION => '';
+    } elsif ($self->{__yyinput} =~ /^\{/o) {
+        # { ... }
+        my $code = $self->__yyReadPerl(\$self->{__yyinput});
+        $self->YYPOP();
+        return ACTION => $code;
+    } elsif ($self->{__yyinput} =~ /^\%\{/o) {
+        # %{ ... %}
+        my $code = $self->__yyReadPerl(\$self->{__yyinput});
+        $self->YYPOP();
+        return ACTION => $code;
+    } elsif ($self->{__yyinput} =~ s/(.+)\n//o) {
+        # One-liner.
+        $self->YYPOP();
+        return ACTION => $1;
+    }
+
+    return $self->__yynextChar;
 }
 
 sub __yylexREGEXCC {
@@ -558,6 +583,66 @@ sub __yyfatal {
                    program_name => $self->programName, error => $message);
     
     die $message;
+}
+
+sub __yyreadPerl {
+    my ($self, $yyinput) = @_;
+
+    my $delim;
+    if ($$yyinput =~ s/^\%\{//) {
+        $delim = '%}';
+    } elsif ($$yyinput =~ s/^\{//) {
+        $delim = '}';
+    } else {
+        $self->__yyfatal(__"internal error: cannot determine code delimiter");
+    }
+
+    my $tokenizer = PPI::Tokenizer->new($yyinput);
+    my $code = '';
+    my $last_token = '';
+    my $nesting = 0;
+    my @here_doc;
+    for (;;) {
+        my $token = $tokenizer->get_token;
+        if (!defined $token) {
+            die $tokenizer->errstr;
+        } elsif (0 == $token) {
+            die __x("cannot find delimiter '{delimiter}' anywhere"
+                    . " before end of file.\n",
+                    delimiter => $delim);
+        }
+
+        my $content = $token->content;
+      
+        if ($token->isa('PPI::Token::Structure')) {
+            if ('{' eq $content) {
+                ++$nesting;
+            } elsif ('}' eq $content) {
+                if ('%}' eq $delim && '%' eq $last_token) {
+                    chop $code;
+                    return $code;
+                }
+                if ('}' eq $delim && !$nesting) {
+                    return $code;
+                }
+                --$nesting;
+            }
+        } elsif ($token->isa('PPI::Token::HereDoc')) {
+            push @here_doc, $token->heredoc, $token->terminator, "\n";
+        }
+
+        $code .= $content;
+        if ($content =~ /\n/) {
+            $code .= join '', @here_doc;
+            undef @here_doc;
+        }
+
+        # Last thing to do so that the location is correctly calculated.
+        $$yyinput = substr $$yyinput, 0, $token->length;
+        $last_token = $content;
+    }
+
+    # NOT REACHED.
 }
 
 1;

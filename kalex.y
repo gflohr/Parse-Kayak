@@ -35,7 +35,8 @@ rules: rule rules
      | /* empty */
      ;
 
-rule: '<' conditions_comma '>' regex WS action
+/* ACTION can be empty.  The lexer takes care of that.  */
+rule: '<' conditions_comma '>' regex ACTION
     | '<' '*' '>' regex WS action
     | regex WS action 
     | RULES_CODE
@@ -44,10 +45,6 @@ rule: '<' conditions_comma '>' regex WS action
 regex: PATTERN
      | regex PATTERN
      ;
-
-action: ACTION
-      | /* empty */
-      ;
 
 conditions_comma: IDENT
           | conditions_comma ',' IDENT
