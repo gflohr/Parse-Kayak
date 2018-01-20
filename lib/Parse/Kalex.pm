@@ -149,12 +149,12 @@ sub __yyvalidateStartCondition {
 }
 
 sub __yyconsumeWhitespace {
-    my ($self, $allow_newline) = @_;
+    my ($self, $multi_line) = @_;
 
-    if ($allow_newline) {
-        $self->{__yyinput} =~ s/^($WS+)//o;
+    if ($multi_line) {
+        $self->{__yyinput} =~ s/^($WSNEWLINE*)\n//o;
     } else {
-        $self->{__yyinput} =~ s/^($WSNEWLINE+)//o;
+        $self->{__yyinput} =~ s/^($WS+)//o;
     }
 
     return $1;
@@ -250,13 +250,18 @@ sub __yylexACTION {
         return ACTION => '';
     } elsif ($self->{__yyinput} =~ /^\{/o) {
         # { ... }
-        my $code = $self->__yyReadPerl(\$self->{__yyinput});
+        my $code = $self->__yyreadPerl(\$self->{__yyinput});
         $self->YYPOP();
+        $DB::single = 1;
+        # FIXME! This will confuse the current location counter!
+        $self->__yyconsumeWhitespace(1);
         return ACTION => $code;
     } elsif ($self->{__yyinput} =~ /^\%\{/o) {
         # %{ ... %}
-        my $code = $self->__yyReadPerl(\$self->{__yyinput});
+        my $code = $self->__yyreadPerl(\$self->{__yyinput});
         $self->YYPOP();
+        # FIXME! This will confuse the current location counter!
+        $self->__yyconsumeWhitespace(1);
         return ACTION => $code;
     } elsif ($self->{__yyinput} =~ s/(.+)\n//o) {
         # One-liner.
@@ -330,7 +335,7 @@ sub __yylexRULES {
         return '<', '<';
     } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYPOP;
-        #$self->YYPUSH('USER_CODE');
+        $self->YYPUSH('USER_CODE');
         return SEPARATOR => '%%';
     } else {
         $self->YYPUSH('REGEX');
@@ -338,6 +343,19 @@ sub __yylexRULES {
     }
 
     return $self->__yynextChar;
+}
+
+sub __yylexUSER_CODE {
+    my ($self) = @_;
+
+    $self->YYPOP();
+        
+    my $code = $self->{__yyinput};
+    $self->{__yyinput} = '';
+
+    return YYEOF if !length $code;
+
+    return USER_CODE => $code;
 }
 
 sub __yylexINITIAL {
@@ -620,9 +638,11 @@ sub __yyreadPerl {
             } elsif ('}' eq $content) {
                 if ('%}' eq $delim && '%' eq $last_token) {
                     chop $code;
+                    $$yyinput = substr $$yyinput, 2;
                     return $code;
                 }
                 if ('}' eq $delim && !$nesting) {
+                    $$yyinput = substr $$yyinput, 1;
                     return $code;
                 }
                 --$nesting;
@@ -632,13 +652,14 @@ sub __yyreadPerl {
         }
 
         $code .= $content;
-        if ($content =~ /\n/) {
+        if (@here_doc && $content =~ /\n/) {
             $code .= join '', @here_doc;
             undef @here_doc;
         }
 
         # Last thing to do so that the location is correctly calculated.
-        $$yyinput = substr $$yyinput, 0, $token->length;
+        $$yyinput = substr $$yyinput, $token->length;
+
         $last_token = $content;
     }
 
