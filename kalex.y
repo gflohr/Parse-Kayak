@@ -35,11 +35,15 @@ rules: rule rules
      | /* empty */
      ;
 
-rule: '<' conditions_comma '>' PATTERN action
-    | '<' '*' '>' PATTERN action
-    | PATTERN code
+rule: '<' conditions_comma '>' regex WS action
+    | '<' '*' '>' regex WS action
+    | regex WS action 
     | RULES_CODE
     ;
+
+regex: PATTERN
+     | regex PATTERN
+     ;
 
 action: ACTION
       | /* empty */

@@ -23,6 +23,8 @@ use IO::Handle;
 use constant YYEOF => ('', undef);
 
 my $IDENT = '[_a-zA-Z][_a-zA-Z0-9]*';
+my $WS = '[ \011\013-\015]';
+my $WSNEWLINE = '[ \011-\015]';
 
 sub new {
     my ($class, $options, @input_files) = @_;
@@ -149,9 +151,9 @@ sub __yyconsumeWhitespace {
     my ($self, $allow_newline) = @_;
 
     if ($allow_newline) {
-        $self->{__yyinput} =~ s/^([ \011-\015]+)//o;
+        $self->{__yyinput} =~ s/^($WS+)//o;
     } else {
-        $self->{__yyinput} =~ s/^([ \011\013-\015]+)//o;
+        $self->{__yyinput} =~ s/^($WSNEWLINE+)//o;
     }
 
     return $1;
@@ -170,7 +172,7 @@ sub __yynextChar {
 sub __yylexCONDITION_DECLS {
     my ($self) = @_;
 
-    if ($self->{__yyinput} =~ s/^([ \011\013-\015]+)//o) {
+    if ($self->{__yyinput} =~ s/^($WS+)//o) {
         return WS => $1;
     } elsif ($self->{__yyinput} =~ s/^(${IDENT})//o) {
         return IDENT => $1;
@@ -236,6 +238,60 @@ sub __yylexCONDITIONS {
     return $self->__yynextChar;
 }
 
+sub __yylexACTION {
+    die;
+}
+
+sub __yylexREGEXCC {
+    my ($self) = @_;
+
+    if ($self->{__yyinput} =~ s/^(\\.)//o) {
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^(\])//o) {
+        $self->YYPOP();
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^\n//o) {
+        return NEWLINE => "\n";
+    } elsif ($self->{__yyinput} =~ s/^(.)//o) {
+        return PATTERN => $1;
+    }
+
+    # Cannot happen.
+    return YYEOF;
+}
+
+sub __yylexREGEX {
+    my ($self) = @_;
+
+    if ($self->{__yyinput} =~ /^$WS+/o) {
+        $self->YYPOP();
+        $self->YYPUSH('ACTION');
+        return PATTERN => '';
+    } elsif ($self->{__yyinput} =~ s/^(\\.)//o) {
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^(\[\]?)//o) {
+        # Character class.  Character classes cannot be empty.  That means
+        # that a closing bracket does not have to be escaped if it is the
+        # first character.
+        $self->YYPUSH('REGEXCC');
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^(\(\??)//o) {
+        if (length $1 == 1) {
+            # Count captures!  There is no need to treat closing parentheses
+            # special.  If they are missing, Perl's regex compiler will
+            # complain.
+        }
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^\n//o) {
+        return NEWLINE => "\n";
+    } elsif ($self->{__yyinput} =~ s/^(.)//o) {
+        return PATTERN => $1;
+    }
+
+    # Cannot happen.
+    return YYEOF;
+}
+
 sub __yylexRULES {
     my ($self) = @_;
 
@@ -247,10 +303,13 @@ sub __yylexRULES {
     if ($self->{__yyinput} =~ s/^<//o) {
         $self->YYPUSH('CONDITIONS');
         return '<', '<';
-    } elsif ($self->{__yyinput} =~ s/^%%//o) {
+    } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYPOP;
         #$self->YYPUSH('USER_CODE');
         return SEPARATOR => '%%';
+    } else {
+        $self->YYPUSH('REGEX');
+        return $self->__yylexREGEX;
     }
 
     return $self->__yynextChar;
@@ -259,9 +318,9 @@ sub __yylexRULES {
 sub __yylexINITIAL {
     my ($self) = @_;
 
-    if ($self->{__yyinput} =~ s/^(%%)//o) {
+    if ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYPUSH('RULES');
-        return SEPARATOR => $1;
+        return SEPARATOR => '%%';
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
         $self->YYPUSH('FIRST_CONDITION_DECLS');
         return SC => $1;
