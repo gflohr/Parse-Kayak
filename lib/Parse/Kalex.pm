@@ -9,8 +9,6 @@
 # to Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
 
-# ABSTRACT: LALR parser generator and lexical scanner for Perl
-
 package Parse::Kalex;
 
 use strict;
