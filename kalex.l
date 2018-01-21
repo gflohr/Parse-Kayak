@@ -1,4 +1,4 @@
 %%
-foo                                     { return "bar" }
+Python                               print "Perl";
 %%
-print "hello\n";
+yylex;

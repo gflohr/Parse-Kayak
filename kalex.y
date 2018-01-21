@@ -24,9 +24,12 @@ definition: name_definition
           | option
           | COMMENT
           | DEF_CODE
+            {
+                  $_[0]->YYData->{generator}->addDefCode($_[1]);
+            }
           | TOP_CODE
             {
-                  $_[0]->YYData->{generator}->addTop($_[1]);
+                  $_[0]->YYData->{generator}->addTopCode($_[1]);
             }
           ;
 
@@ -70,6 +73,9 @@ conditions_space: IDENT
           ;
 
 user_code_section: SEPARATOR USER_CODE
+                   {
+                       $_[0]->YYData->{generator}->addUserCode($_[1]);
+                   }
                  | SEPARATOR
                  | /* empty */
                  ;
