@@ -24,6 +24,7 @@ my %module_build_args = (
   "module_name" => "Parse::Kayak",
   "recursive_test_files" => 1,
   "requires" => {
+    "File::Spec" => 0,
     "Getopt::Long" => "2.36",
     "IO::Handle" => 0,
     "Locale::Messages" => 0,

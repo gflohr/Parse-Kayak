@@ -1,3 +1,13 @@
+/* Copyright (C) 2018 Guido Flohr <guido.flohr@cantanea.com>,
+ * all rights reserved.
+
+ * This program is free software. It comes without any warranty, to
+ * the extent permitted by applicable law. You can redistribute it
+ * and/or modify it under the terms of the Do What the Fuck You Want
+ * to Public License, Version 2, as published by Sam Hocevar. See
+ *http://www.wtfpl.net/ for more details.
+ */
+
 %%
 input_file: definitions_section rules_section user_code_section { return 1 }
           ;
@@ -15,6 +25,9 @@ definition: name_definition
           | COMMENT
           | DEF_CODE
           | TOP_CODE
+            {
+                  $_[0]->YYData->{generator}->addTop($_[1]);
+            }
           ;
 
 name_definition: NAME REGEX
@@ -39,8 +52,8 @@ rules: rule rules
 
 /* ACTION can be empty.  The lexer takes care of that.  */
 rule: '<' conditions_comma '>' regex ACTION
-    | '<' '*' '>' regex WS action
-    | regex WS action 
+    | '<' '*' '>' regex ACTION
+    | regex ACTION
     | RULES_CODE
     ;
 
@@ -57,6 +70,7 @@ conditions_space: IDENT
           ;
 
 user_code_section: SEPARATOR USER_CODE
+                 | SEPARATOR
                  | /* empty */
                  ;
 %%

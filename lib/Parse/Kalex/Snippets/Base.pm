@@ -14,9 +14,11 @@ package Parse::Kalex::Snippets::Base;
 use strict;
 
 sub new {
-    my ($class) = @_;
+    my ($class, %options) = @_;
 
-    bless {}, $class;
+    bless {
+        yyin => \*STDIN
+    }, $class;
 }
 
 sub yylex {

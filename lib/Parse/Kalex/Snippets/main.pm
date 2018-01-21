@@ -11,17 +11,27 @@
 
 package main;
 
+use strict;
+
 my $yylexer = Parse::Kalex::Lexer->new;
 
-my $yytext;
-tie $yytext, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
+tie my $yytext, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
+tie my $yyin, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
 
-my $yyin = \*STDIN;
+package Parse::Kalex::Lexer;
+
+use strict;
+
+sub yywrap {
+    main::yywrap();
+}
 
 package Parse::Kalex::Snippets::main::Tier;
 
+use strict;
+
 sub TIESCALAR {
-    my ($self, $obj, $varname) = @_;
+    my ($class, $obj, $varname) = @_;
 
     bless {
         __obj => $obj,
@@ -40,13 +50,5 @@ sub STORE {
 
    $self->{__obj}->{$self->{__varname}} = $value;
 }
-
-package main;
-
-print "yytext: $yytext\n";
-$yytext = 'Yanas Möse';
-print "yytext: $yytext\n";
-$yylexer->{yytext} = 'Guidos Schwanz';
-print "yytext: $yytext\n";
 
 1;

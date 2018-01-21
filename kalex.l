@@ -1,15 +1,4 @@
-%top {
-use strict;
-}
-
-%s PATTERN FOOBAR
 %%
-<PATTERN,FOOBAR>abcdef          print "foobar!\n"; return $^N;
-<PATTERN>jdsdlkfs               {
-                                        print "Hello, world!\n";
-                                }
-<PATTERN>sdklfds                %{
-                                        print "Hello, world!\n";
-                                %}
+foo                                     { return "bar" }
 %%
-print "Hello, world!\n";
+print "hello\n";

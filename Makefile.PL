@@ -23,6 +23,7 @@ my %WriteMakefileArgs = (
   "LICENSE" => "unrestricted",
   "NAME" => "Parse::Kayak",
   "PREREQ_PM" => {
+    "File::Spec" => 0,
     "Getopt::Long" => "2.36",
     "IO::Handle" => 0,
     "Locale::Messages" => 0,
@@ -43,6 +44,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "File::Spec" => 0,
   "Getopt::Long" => "2.36",
   "IO::Handle" => 0,
   "Locale::Messages" => 0,
