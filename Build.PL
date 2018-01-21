@@ -24,12 +24,13 @@ my %module_build_args = (
   "module_name" => "Parse::Kayak",
   "recursive_test_files" => 1,
   "requires" => {
-    "Carp" => 0,
+    "Getopt::Long" => "2.36",
+    "IO::Handle" => 0,
     "Locale::Messages" => 0,
-    "Parse::Kalex" => 0,
-    "perl" => "5.004",
-    "strict" => 0,
-    "vars" => 0
+    "Locale::TextDomain" => 0,
+    "PPI::Tokenizer" => 0,
+    "constant" => 0,
+    "strict" => 0
   },
   "script_files" => [
     "bin/kalex"

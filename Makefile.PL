@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.004;
+
 
 use ExtUtils::MakeMaker;
 
@@ -21,14 +21,15 @@ my %WriteMakefileArgs = (
     "bin/kalex"
   ],
   "LICENSE" => "unrestricted",
-  "MIN_PERL_VERSION" => "5.004",
   "NAME" => "Parse::Kayak",
   "PREREQ_PM" => {
-    "Carp" => 0,
+    "Getopt::Long" => "2.36",
+    "IO::Handle" => 0,
     "Locale::Messages" => 0,
-    "Parse::Kalex" => 0,
-    "strict" => 0,
-    "vars" => 0
+    "Locale::TextDomain" => 0,
+    "PPI::Tokenizer" => 0,
+    "constant" => 0,
+    "strict" => 0
   },
   "TEST_REQUIRES" => {
     "Test::More" => 0
@@ -41,13 +42,15 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
-  "Carp" => 0,
+  "Getopt::Long" => "2.36",
+  "IO::Handle" => 0,
   "Locale::Messages" => 0,
+  "Locale::TextDomain" => 0,
   "Module::Build" => "0.28",
-  "Parse::Kalex" => 0,
+  "PPI::Tokenizer" => 0,
   "Test::More" => 0,
-  "strict" => 0,
-  "vars" => 0
+  "constant" => 0,
+  "strict" => 0
 );
 
 

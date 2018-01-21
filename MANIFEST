@@ -11,8 +11,10 @@ README.pod
 bin/kalex
 dist.ini
 generate.sh
+kalex.l
 kalex.y
-lib/Parse/Kalex/Parser.pm
+lib/Parse/Kalex.pm
+lib/Parse/Kalex/Snippets/Base.pm
 lib/Parse/Kayak.md
 lib/Parse/Kayak.pm
 lib/Parse/Kayak.pod
@@ -23,3 +25,4 @@ t/author-critic.t
 t/author-pod-coverage.t
 t/author-pod-syntax.t
 t/release-cpan-changes.t
+t/scanners/echo.l
