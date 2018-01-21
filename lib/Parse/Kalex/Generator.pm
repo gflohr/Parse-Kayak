@@ -116,7 +116,12 @@ sub addRule {
         my $location = join ':', @regex[1 .. 3];
         warn __x("{location}: error: {error}.\n",
                  location => $location, error => $x);
-        ++$self->{__errors};        
+        ++$self->{__errors};    
+    } elsif ('' =~ {$qr}) {
+        my $location = join ':', @regex[1 .. 3];
+        warn __x("{location}: error: regular expression matches empty string.\n",
+                 location => $location);
+        ++$self->{__errors};                
     } else {
         push @{$self->{__rules}}, [[@$start_conditions], $qr, $code];
     }
