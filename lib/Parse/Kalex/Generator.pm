@@ -13,14 +13,21 @@ package Parse::Kalex::Generator;
 
 use strict;
 
+use Locale::TextDomain qw(kayak);
+
 sub new {
     my ($class, $lexer) = @_;
 
     bless {
+        __errors => 0,
         __top_code => [],
         __def_code => [],
         __lexer => $lexer,
         __filename => '',
+        __start_conditions => {
+            INITIAL => 1,
+        },
+        __xstart_condtions => {}
     }, $class;
 }
 
@@ -49,6 +56,34 @@ sub setUserCode {
     $self->{__user_code} = [$code, @location ];
 
     return $self;
+}
+
+sub checkStartCondition {
+    my ($self, $condition) = @_;
+
+    if (!exists $self->{__start_conditions}->{$condition}
+        && !exists $self->{__xstart_conditions}->{$condition}) {
+        my $location = $self->{__lexer}->yylocation;
+        warn __x("{location}: undeclared start condition '{condition}'.\n",
+                 location => $location, condition => $condition);
+        ++$self->{__errors};
+    }
+
+    return $self;
+}
+
+sub addRule {
+    my ($self, $start_conditions, $regex, $code) = @_;
+
+    return $self;
+}
+
+sub errors {
+    my ($self) = @_;
+
+    return if !$self->{__errors};
+
+    return $self->{__errors};
 }
 
 sub generate {
@@ -189,8 +224,8 @@ sub __readModuleCode {
         }
     };
     if ($@) {
-        $self->__yyfatal(__x("error reading code from mode '{module}': {err}",
-                             module => $module, err => $@));
+        die __x("error reading code from mode '{module}': {err}",
+                module => $module, err => $@);
     }
 
     return $code;

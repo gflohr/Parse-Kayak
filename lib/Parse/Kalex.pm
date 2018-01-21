@@ -503,6 +503,7 @@ sub scan {
     return if !defined $result;
 
     $self->{__generator} = $parser->YYData->{generator};
+    return if $self->{__generator}->errors;
 
     return $self;
 }
@@ -540,7 +541,8 @@ sub output {
     $self->{__outname} = $outname;
     $self->{__outfh} = $fh;
 
-    my $output = $generator->generate(%options);
+    my $output = eval { $generator->generate(%options) };
+    $self->__yyfatal($@) if $@;
 
     $fh->print($output)
         or $self->__yyfatal(__x("error writing to '{filename}:'"
