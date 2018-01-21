@@ -27,7 +27,8 @@ sub new {
         __start_conditions => {
             INITIAL => 1,
         },
-        __xstart_condtions => {}
+        __xstart_condtions => {},
+        __rules => [],
     }, $class;
 }
 
@@ -58,15 +59,45 @@ sub setUserCode {
     return $self;
 }
 
+sub addStartConditions {
+    my ($self, $type, $conditions) = @_;
+
+    if ($type eq '%x') {
+        foreach my $condition (@$conditions) {
+            $self->{__xstart_conditions}->{$condition} = 1;
+        }
+    } else {
+        foreach my $condition (@$conditions) {
+            $self->{__start_conditions}->{$condition} = 1;
+        }
+    }
+
+    return $self;
+}
+
+sub checkStartConditionDeclaration {
+    my ($self, $condition, $exclusive) = @_;
+
+    if (!exists $self->{__start_conditions}->{$condition}
+        || exists $self->{__xstart_conditions}->{$condition}) {
+        my $location = $self->{__lexer}->yylocation;
+        warn __x("{location}: warning: start condition '{condition}'"
+                 . " is already declared.\n",
+                 location => $location, condition => $condition);
+    }
+
+    return $self;
+}
+
 sub checkStartCondition {
     my ($self, $condition) = @_;
 
     if (!exists $self->{__start_conditions}->{$condition}
         && !exists $self->{__xstart_conditions}->{$condition}) {
         my $location = $self->{__lexer}->yylocation;
-        warn __x("{location}: undeclared start condition '{condition}'.\n",
+        warn __x("{location}: warning: undeclared start condition '{condition}'.\n",
                  location => $location, condition => $condition);
-        ++$self->{__errors};
+        $self->{__start_conditions}->{$condition} = 1;
     }
 
     return $self;
@@ -74,6 +105,21 @@ sub checkStartCondition {
 
 sub addRule {
     my ($self, $start_conditions, $regex, $code) = @_;
+
+    my @regex = @$regex;
+    my $qr = eval { qr{^$regex[0]} };
+    if ($@) {
+        my $x = $@;
+        my $file = quotemeta __FILE__;
+        $x =~ s{ at $file line [0-9]+\.\n$}{};
+
+        my $location = join ':', @regex[1 .. 3];
+        warn __x("{location}: error: {error}.\n",
+                 location => $location, error => $x);
+        ++$self->{__errors};        
+    } else {
+        push @{$self->{__rules}}, [[@$start_conditions], $qr, $code];
+    }
 
     return $self;
 }

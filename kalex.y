@@ -37,6 +37,11 @@ name_definition: NAME REGEX
                ;
 
 sc_definition: SC conditions_space NEWLINE
+                 {
+                     $_[0]->YYData->{generator}->addStartConditions(
+                         $_[1], $_[2]
+                     );
+                 }
              ;
 
 option: OPTION optionlist
@@ -64,7 +69,7 @@ rule: '<' conditions_comma '>' regex ACTION
         }
     | regex ACTION
         {
-            $_[0]->YYData->{generator}->addRule(undef, $_[1], $_[2]);
+            $_[0]->YYData->{generator}->addRule([], $_[1], $_[2]);
         }
     | RULES_CODE
     ;
@@ -87,7 +92,18 @@ conditions_comma: IDENT
                     ;
 
 conditions_space: IDENT
+                    {
+                        $_[0]->YYData->{generator}
+                                     ->checkStartConditionDeclaration($_[1]);
+                        return [$_[1]];
+                    }
                 | conditions_space WS IDENT
+                    {
+                        $_[0]->YYData->{generator}
+                                     ->checkStartConditionDeclaration($_[1]);
+                        push @{$_[1]}, $_[2];
+                        return $_[1];
+                    }
                 ;
 
 user_code_section: SEPARATOR USER_CODE

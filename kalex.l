@@ -1,6 +1,5 @@
-%s INIITIAL
 %%
-<INITIAL>Python                         print "Perl";
+Python                         print "Perl";
 %%
 use strict;
 
