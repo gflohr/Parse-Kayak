@@ -12,6 +12,7 @@ definitions: definition definitions
 definition: name_definition
           | sc_definition
           | option
+          | COMMENT
           | DEF_CODE
           ;
 

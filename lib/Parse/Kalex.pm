@@ -161,7 +161,7 @@ sub __yyconsumeWhitespace {
 sub __yynextChar {
     my ($self) = @_;
 
-    if ($self->{__yyinput} =~ s/^(.)//o) {
+    if ($self->{__yyinput} =~ s/^(.|\n)//o) {
         return $1, $1;
     }
 
@@ -365,6 +365,18 @@ sub __yylexINITIAL {
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
         $self->YYPUSH('FIRST_CONDITION_DECLS');
         return SC => $1;
+    } elsif ($self->{__yyinput} =~ s{^/\*}{}o) {
+        $self->{__yyinput} = '/*' . $self->{__yyinput};
+        if ($self->{__yyinput} !~ s{(/\*.*?\*/)$WS?\n}{}o) {
+            $self->__yyfatalParseError(__("cannot find comment delimiter '*/'"
+                                          . " before end of file"));
+        } else {
+            return COMMENT => $1;
+        }
+    } elsif ($self->{__yyinput} =~ s/^$WSNEWLINE*\n//o) {
+        return $self->__yylex();
+    } elsif ($self->{__yyinput} =~ s/^$WS+.*\n//o) {
+        return DEF_CODE => $1;
     }
 
     return $self->__yynextChar;
@@ -595,9 +607,21 @@ sub __yyfatal {
     my ($self, $message) = @_;
 
     $message =~ s/\s+$//;
-    $message = __x("{program_name}: {error}\n",
-                   program_name => $self->programName, error => $message);
+    $message = __x("{location}: {error}\n",
+                   location => $self->programName, error => $message);
     
+    die $message;
+}
+
+sub __yyfatalParseError {
+    my ($self, $message) = @_;
+
+    my $location = $self->yylocation;
+
+    $message =~ s/\s+$//;
+    $message = __x("{location}: {error}\n",
+                   location => $location, error => $message);
+
     die $message;
 }
 
