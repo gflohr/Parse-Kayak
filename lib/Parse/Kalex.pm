@@ -382,6 +382,19 @@ sub __yylexINITIAL {
         return $self->__yylex();
     } elsif ($self->{__yyinput} =~ s/^$WS+.*\n//o) {
         return DEF_CODE => $1;
+    } elsif ($self->{__yyinput} =~ /^%\{/) {
+        my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
+        if ($@) {
+            $self->__yyfatalParseError($@);
+        }
+        return DEF_CODE => $1;
+    } elsif ($self->{__yyinput} =~ s/^\%top$WSNEWLINE*\{//) {
+        $self->{__yyinput} = '{' . $self->{__yyinput};
+        my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
+        if ($@) {
+            $self->__yyfatalParseError($@);
+        }
+        return TOP_CODE => $1;
     }
 
     return $self->__yynextChar;

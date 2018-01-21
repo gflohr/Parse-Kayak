@@ -14,6 +14,7 @@ definition: name_definition
           | option
           | COMMENT
           | DEF_CODE
+          | TOP_CODE
           ;
 
 name_definition: NAME REGEX
