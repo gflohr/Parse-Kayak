@@ -17,10 +17,16 @@ my $yylexer = Parse::Kalex::Lexer->new;
 
 tie my $yytext, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
 tie my $yyin, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
+tie my $yyout, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yyout';
+
+sub yylex {
+    $yylexer->yylex();
+}
 
 package Parse::Kalex::Lexer;
 
 use strict;
+
 
 sub yywrap {
     main::yywrap();

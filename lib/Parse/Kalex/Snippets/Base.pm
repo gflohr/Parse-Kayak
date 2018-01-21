@@ -13,16 +13,33 @@ package Parse::Kalex::Snippets::Base;
 
 use strict;
 
+use Locale::TextDomain qw(kayak);
+use Scalar::Util qw(blessed);
+
 sub new {
     my ($class, %options) = @_;
 
     bless {
-        yyin => \*STDIN
+        yyin => \*STDIN,
+        yyout => \*STDOUT,
     }, $class;
 }
 
 sub yylex {
     my ($self) = @_;
+
+    if (!exists $self->{__yyinput} || !length $self->{__yyinput}) {
+        if ($self->{yyin}->eof) {
+            return if $self->yywrap;
+        }
+
+        return if $self->{yyin}->eof;
+
+        $self->{__yyinput} = join '', $self->{yyin}->getlines;
+    }
+
+    $self->{yyout}->print($self->{__yyinput});
+    $self->{__yyinput} = '';
 
     return $self;
 }

@@ -74,7 +74,7 @@ conditions_space: IDENT
 
 user_code_section: SEPARATOR USER_CODE
                    {
-                       $_[0]->YYData->{generator}->addUserCode($_[1]);
+                       $_[0]->YYData->{generator}->setUserCode($_[2]);
                    }
                  | SEPARATOR
                  | /* empty */
