@@ -248,15 +248,20 @@ sub __yylexACTION {
         return ACTION => '';
     } elsif ($self->{__yyinput} =~ /^\{/o) {
         # { ... }
-        my $code = $self->__yyreadPerl(\$self->{__yyinput});
+        my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
+        if ($@) {
+            $self->__yyfatalParseError($@);
+        }
         $self->YYPOP();
-        $DB::single = 1;
         # FIXME! This will confuse the current location counter!
         $self->__yyconsumeWhitespace(1);
         return ACTION => $code;
     } elsif ($self->{__yyinput} =~ /^\%\{/o) {
         # %{ ... %}
         my $code = $self->__yyreadPerl(\$self->{__yyinput});
+        if ($@) {
+            $self->__yyfatalParseError($@);
+        }
         $self->YYPOP();
         # FIXME! This will confuse the current location counter!
         $self->__yyconsumeWhitespace(1);
