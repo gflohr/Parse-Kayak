@@ -1,7 +1,6 @@
-/* This should be discarded.  */
-
-  /* This should be kept.  */
-  my $foo = 'bar';
+%top {
+use strict;
+}
 
 %s PATTERN FOOBAR
 %%

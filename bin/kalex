@@ -17,5 +17,5 @@ use Parse::Kalex;
 
 setlocale(LC_MESSAGES, '');
 my $parser = Parse::Kalex->newFromArgv(\@ARGV);
-$parser->run or exit 1;
+$parser->scan or exit 1;
 $parser->output or exit 2;

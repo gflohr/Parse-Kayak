@@ -11,10 +11,8 @@ use strict;
 
 use Test::More tests => 4;
 
-ok require Parse::Kayak;
-my $parser = Parse::Kayak->new;
-ok $parser;
-ok ref $parser;
-ok $parser->isa('Parse::Kayak');
-
-
+ok require Parse::Kalex;
+my $scanner = Parse::Kalex->new;
+ok $scanner;
+ok ref $scanner;
+ok $scanner->isa('Parse::Kalex');

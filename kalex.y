@@ -1,5 +1,5 @@
 %%
-input_file: definitions_section rules_section user_code_section
+input_file: definitions_section rules_section user_code_section { return 1 }
           ;
 
 definitions_section: definitions
