@@ -29,6 +29,7 @@ my %module_build_args = (
     "Locale::Messages" => 0,
     "Locale::TextDomain" => 0,
     "PPI::Tokenizer" => 0,
+    "Parse::Yapp" => 0,
     "constant" => 0,
     "strict" => 0
   },

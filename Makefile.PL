@@ -28,6 +28,7 @@ my %WriteMakefileArgs = (
     "Locale::Messages" => 0,
     "Locale::TextDomain" => 0,
     "PPI::Tokenizer" => 0,
+    "Parse::Yapp" => 0,
     "constant" => 0,
     "strict" => 0
   },
@@ -48,6 +49,7 @@ my %FallbackPrereqs = (
   "Locale::TextDomain" => 0,
   "Module::Build" => "0.28",
   "PPI::Tokenizer" => 0,
+  "Parse::Yapp" => 0,
   "Test::More" => 0,
   "constant" => 0,
   "strict" => 0
