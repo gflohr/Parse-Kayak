@@ -68,7 +68,7 @@ rule: '<' conditions_comma '>' regex ACTION
     | '<' '*' '>' regex ACTION
         {
             $_[0]->YYData->{generator}->addRule(
-                  $_[2], [$_[4]], $_[5], $_[0]->YYData->{lexer}->yylocation
+                  [$_[2]], $_[4], $_[5], $_[0]->YYData->{lexer}->yylocation
             );
         }
     | regex ACTION
@@ -80,8 +80,8 @@ rule: '<' conditions_comma '>' regex ACTION
     | RULES_CODE
     ;
 
-regex: PATTERN            { [$_[1], $_[0]->YYData->{lexer}->yylocation] }
-     | regex PATTERN      { $_[1]->[0] .= $_[2]; return $_[1] }
+regex: PATTERN            { $_[0]->YYData->{generator}->addRegex($_[1]) }
+     | regex PATTERN      { $_[0]->YYData->{generator}->growRegex($_[1], $_[2])}
      ;
 
 conditions_comma: IDENT
@@ -91,8 +91,8 @@ conditions_comma: IDENT
                     }
                   | conditions_comma ',' IDENT
                     {
-                        $_[0]->YYData->{generator}->checkStartCondition($_[1]);
-                        push @{$_[1]}, $_[2];
+                        $_[0]->YYData->{generator}->checkStartCondition($_[3]);
+                        push @{$_[1]}, $_[3];
                         return $_[1];
                     }
                     ;
@@ -106,8 +106,8 @@ conditions_space: IDENT
                 | conditions_space WS IDENT
                     {
                         $_[0]->YYData->{generator}
-                                     ->checkStartConditionDeclaration($_[1]);
-                        push @{$_[1]}, $_[2];
+                                     ->checkStartConditionDeclaration($_[3]);
+                        push @{$_[1]}, $_[3];
                         return $_[1];
                     }
                 ;

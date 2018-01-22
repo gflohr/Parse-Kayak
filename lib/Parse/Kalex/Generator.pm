@@ -14,6 +14,7 @@ package Parse::Kalex::Generator;
 use strict;
 
 use Locale::TextDomain qw(kayak);
+use Data::Dumper;
 
 sub new {
     my ($class, $lexer) = @_;
@@ -25,9 +26,12 @@ sub new {
         __lexer => $lexer,
         __filename => '',
         __start_conditions => {
-            INITIAL => 1,
+            INITIAL => 0,
         },
         __xstart_condtions => {},
+        __condition_counter => 0,
+        __condition_types => ['s'],
+        __condition_names => ['INITIAL'],
         __rules => [],
     }, $class;
 }
@@ -64,11 +68,17 @@ sub addStartConditions {
 
     if ($type eq '%x') {
         foreach my $condition (@$conditions) {
-            $self->{__xstart_conditions}->{$condition} = 1;
+            $self->{__xstart_conditions}->{$condition} 
+                = ++$self->{__condition_counter};
+            push @{$self->{__condition_types}}, 'x';
+            push @{$self->{__condition_names}}, $condition;
         }
     } else {
         foreach my $condition (@$conditions) {
-            $self->{__start_conditions}->{$condition} = 1;
+            $self->{__start_conditions}->{$condition}
+                = ++$self->{__condition_counter};
+            push @{$self->{__condition_types}}, 's';                
+            push @{$self->{__condition_names}}, $condition;
         }
     }
 
@@ -78,7 +88,7 @@ sub addStartConditions {
 sub checkStartConditionDeclaration {
     my ($self, $condition, $exclusive) = @_;
 
-    if (!exists $self->{__start_conditions}->{$condition}
+    if (exists $self->{__start_conditions}->{$condition}
         || exists $self->{__xstart_conditions}->{$condition}) {
         my $location = $self->{__lexer}->yylocation;
         warn __x("{location}: warning: start condition '{condition}'"
@@ -97,7 +107,10 @@ sub checkStartCondition {
         my $location = $self->{__lexer}->yylocation;
         warn __x("{location}: warning: undeclared start condition '{condition}'.\n",
                  location => $location, condition => $condition);
-        $self->{__start_conditions}->{$condition} = 1;
+        $self->{__start_conditions}->{$condition}
+            = ++$self->{__condition_counter};
+        push @{$self->{__condition_types}}, 's';
+        push @{$self->{__condition_names}}, $condition;
     }
 
     return $self;
@@ -124,14 +137,52 @@ sub addRule {
                  location => $location);
         ++$self->{__errors};                
     } else {
+        # Translate the start conditions into numbers.
+        my @start_conditions;
+        foreach my $condition (@$start_conditions) {
+            if ('*' eq $condition) {
+                push @start_conditions, '-1';
+            } elsif (exists $self->{__start_conditions}->{$condition}) {
+                push @start_conditions, $self->{__start_conditions}->{$condition};
+            } else {
+                push @start_conditions, $self->{__xstart_conditions}->{$condition};                
+            }
+        }
         push @{$self->{__rules}}, [
-            [@$start_conditions], 
-            $qr,
+            [@start_conditions], 
+            $regex,
             $code,
             [$filename, $lineno, $charno]];
     }
 
     return $self;
+}
+
+sub addRegex {
+    my ($self, $chunk) = @_;
+
+    my @location = $self->{__lexer}->yylocation;
+    my $parens = 0;
+    ++$parens if '(' eq $chunk;
+    my @backrefs;
+    if ($chunk =~ /^\\[1-9][0-9]*$/) {
+        push @backrefs, [0, length $chunk];
+    }
+
+    return [$chunk, $parens, \@backrefs, @location];
+}
+
+sub growRegex {
+    my ($self, $def, $chunk) = @_;
+
+    if ($chunk =~ /^\\[1-9][0-9]*$/) {
+        my $backrefs = $def->[2];
+        push @$backrefs, [length $def->[0], length $chunk];
+    }
+    $def->[0] .= $chunk;
+    ++$def->[1] if '(' eq $chunk;
+
+    return $def;
 }
 
 sub errors {
@@ -174,7 +225,7 @@ EOF
 
     $output .= $self->__defCode;
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
-    $output .= $self->__yylex;
+    $output .= $self->__writeInit(2 + $output =~ y/\n/\n/);
     $self->{__filename} = ''; # Invalidate cursor.
 
     if (!defined $options{package}) {
@@ -188,35 +239,48 @@ EOF
     return $output;
 }
 
-sub __yylex {
+sub __dumpVariable {
+    my ($self, $variable) = @_;
+
+    my $dumper = Data::Dumper->new([$variable]);
+    $dumper->Indent(0);
+    my $dump = substr $dumper->Dump, 8;
+    chop $dump;
+
+    return $dump;
+}
+
+sub __writeInit {
+    my ($self, $offset) = @_;
+
+    my $filename = $self->{__lexer}->outputFilename;
+    my $output = qq{#line $offset "$filename"\n};
+
+    $output .= <<'EOF';
+sub __yyinit {
     my ($self) = @_;
 
-    my $output = <<'EOF';
-sub __yylex {
-    my ($self) = @_;
-
-    my @actions = (
+    $self->{__rules} = [
 EOF
-
+    
     foreach my $rule (@{$self->{__rules}}) {
-        my ($start_cons, $regex, $action, $location) = @$rule;
-
-        $output .= <<EOF;
-#line $location->[1] "$location->[0]"
-sub {$action},
-EOF
+        # We need the start conditions, the pattern, the number of
+        # parentheses and the list of back references.
+        my $record = [$rule->[0], $rule->[1]->[0], $rule->[1]->[1], 
+                      $rule->[1]->[2]];
+        my $dump = $self->__dumpVariable($record);
+        $output .= "        $dump,\n";
     }
 
-    my $filename = __FILE__;
-    my $lineno = __LINE__ + 2;
+    my $ctypes = $self->__dumpVariable($self->{__condition_types});
+
     $output .= <<EOF;
-#line $lineno "$filename"
-sub {\$self->{yyout}->print(\$_[1])}
-);
+    ];
+    \$self->{__condition_types} = $ctypes;
 
+    \$self->__initMatcher;
+}
 EOF
-
-    $output .= "}\n";
 
     return $output;
 }
@@ -301,9 +365,13 @@ sub __readModuleCode {
             or die __x("error opening '{filename}' for"
                        . " reading: {error}!",
                        filename => $filename, error => $!);
+        my $discarded = 1;
         while (defined(my $line = $fh->getline)) {
+            ++$discarded;
             last if $line =~ /^package/;
         }
+        $code .= qq{#line $discarded "$module"\n};
+
         while (defined(my $line = $fh->getline)) {
             last if $line =~ /^1;/;
             $code .= $line;

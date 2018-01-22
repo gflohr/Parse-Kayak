@@ -307,6 +307,9 @@ sub __yylexREGEX {
         $self->YYPOP();
         $self->YYPUSH('ACTION');
         return PATTERN => '';
+    } elsif ($self->{__yyinput} =~ s/^(\\[1-9][0-9]*)//o) {
+        # Backreference.  They must be counted.
+        return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\\.)//o) {
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\[\]?)//o) {
@@ -316,14 +319,11 @@ sub __yylexREGEX {
         $self->YYPUSH('REGEXCC');
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\(\??)//o) {
-        if (length $1 == 1) {
-            # Count captures!  There is no need to treat closing parentheses
-            # special.  If they are missing, Perl's regex compiler will
-            # complain.
-        }
+        # This is a chunk of its own so that we can count parentheses.
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^\n//o) {
-        return NEWLINE => "\n";
+        $self->YYPOP();
+        return PATTERN => '';
     } elsif ($self->{__yyinput} =~ s/^(.)//o) {
         return PATTERN => $1;
     }
@@ -506,6 +506,10 @@ sub scan {
     return if $self->{__generator}->errors;
 
     return $self;
+}
+
+sub outputFilename {
+    shift->{__outname};
 }
 
 sub output {
