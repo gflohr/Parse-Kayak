@@ -165,8 +165,8 @@ sub addRegex {
     my $parens = 0;
     ++$parens if '(' eq $chunk;
     my @backrefs;
-    if ($chunk =~ /^\\[1-9][0-9]*$/) {
-        push @backrefs, [0, length $chunk];
+    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
+        push @backrefs, [0, length $chunk, $1];
     }
 
     return [$chunk, $parens, \@backrefs, @location];
@@ -175,9 +175,9 @@ sub addRegex {
 sub growRegex {
     my ($self, $def, $chunk) = @_;
 
-    if ($chunk =~ /^\\[1-9][0-9]*$/) {
+    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
         my $backrefs = $def->[2];
-        push @$backrefs, [length $def->[0], length $chunk];
+        push @$backrefs, [length $def->[0], length $chunk, $1];
     }
     $def->[0] .= $chunk;
     ++$def->[1] if '(' eq $chunk;
@@ -278,7 +278,7 @@ EOF
     ];
     \$self->{__condition_types} = $ctypes;
 
-    \$self->__initMatcher;
+    \$self->__yyinitMatcher;
 }
 EOF
 
