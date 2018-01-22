@@ -61,15 +61,21 @@ rules: rule rules
 /* ACTION can be empty.  The lexer takes care of that.  */
 rule: '<' conditions_comma '>' regex ACTION
         {
-            $_[0]->YYData->{generator}->addRule($_[2], $_[4], $_[5]);
+            $_[0]->YYData->{generator}->addRule(
+                $_[2], $_[4], $_[5], $_[0]->YYData->{lexer}->yylocation
+            );
         }
     | '<' '*' '>' regex ACTION
         {
-            $_[0]->YYData->{generator}->addRule($_[2], [$_[4]], $_[5]);
+            $_[0]->YYData->{generator}->addRule(
+                  $_[2], [$_[4]], $_[5], $_[0]->YYData->{lexer}->yylocation
+            );
         }
     | regex ACTION
         {
-            $_[0]->YYData->{generator}->addRule([], $_[1], $_[2]);
+            $_[0]->YYData->{generator}->addRule(
+                  [], $_[1], $_[2], $_[0]->YYData->{lexer}->yylocation
+            );
         }
     | RULES_CODE
     ;

@@ -41,7 +41,7 @@ sub yylex {
     $self->{yyout}->print($self->{__yyinput});
     $self->{__yyinput} = '';
 
-    return $self;
+    return $self->__yylex;
 }
 
 1;

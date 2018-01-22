@@ -104,7 +104,8 @@ sub checkStartCondition {
 }
 
 sub addRule {
-    my ($self, $start_conditions, $regex, $code) = @_;
+    my ($self, $start_conditions, $regex, $code,
+        $filename, $lineno, $charno) = @_;
 
     my @regex = @$regex;
     my $qr = eval { qr{^$regex[0]} };
@@ -123,7 +124,11 @@ sub addRule {
                  location => $location);
         ++$self->{__errors};                
     } else {
-        push @{$self->{__rules}}, [[@$start_conditions], $qr, $code];
+        push @{$self->{__rules}}, [
+            [@$start_conditions], 
+            $qr,
+            $code,
+            [$filename, $lineno, $charno]];
     }
 
     return $self;
@@ -164,19 +169,54 @@ ${top_code}
 EOF
 
         $output .= $self->__readModuleCode('Parse/Kalex/Snippets/main.pm');
-
         $output .= "package Parse::Kalex::Lexer;\n";
     }
 
     $output .= $self->__defCode;
-
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
+    $output .= $self->__yylex;
+    $self->{__filename} = ''; # Invalidate cursor.
 
     if (!defined $options{package}) {
         $output .= "package main;\n\nno strict;\n\n";
+    } else {
+        $output .= "\n1;\n";
     }
 
     $output .= $self->__userCode;
+
+    return $output;
+}
+
+sub __yylex {
+    my ($self) = @_;
+
+    my $output = <<'EOF';
+sub __yylex {
+    my ($self) = @_;
+
+    my @actions = (
+EOF
+
+    foreach my $rule (@{$self->{__rules}}) {
+        my ($start_cons, $regex, $action, $location) = @$rule;
+
+        $output .= <<EOF;
+#line $location->[1] "$location->[0]"
+sub {$action},
+EOF
+    }
+
+    my $filename = __FILE__;
+    my $lineno = __LINE__ + 2;
+    $output .= <<EOF;
+#line $lineno "$filename"
+sub {\$self->{yyout}->print(\$_[1])}
+);
+
+EOF
+
+    $output .= "}\n";
 
     return $output;
 }
