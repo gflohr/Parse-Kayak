@@ -123,7 +123,7 @@ sub __yycompilePatterns {
         # The most efficient way is to embed tiny code snippets which give
         # you all the relevant information.  We store that in the variables
         # $yyrule and $__yyoffset.
-        $pattern .= "(?{\$yyrule = $r; \$__yyoffset = $parentheses;})";
+        $pattern .= "(?{\$self->{__yymatch} = [$r, $parentheses, $rule->[2]]})";
         push @patterns, "($pattern)";
 
         $self->{__yypattern_cache}->[$r]->[$parentheses] = $pattern;
@@ -136,7 +136,7 @@ sub __yycompilePatterns {
     ++$parentheses;
 
     my $pattern = '((?s:.))'
-            . "(?{\$yyrule = $default_rule; \$__yyoffset = $parentheses;})";
+            . "(?{\$self->{__yymatch} = [$default_rule, $parentheses, 0]})";
     push @patterns, $pattern;
 
     my $re = join '|', @patterns;
