@@ -20,13 +20,12 @@ tie my $yyin, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
 tie my $yyout, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yyout';
 
 sub yylex {
-    $yylexer->yylex();
+    $yylexer->yylex;
 }
 
 package Parse::Kalex::Lexer;
 
 use strict;
-
 
 sub yywrap {
     main::yywrap();

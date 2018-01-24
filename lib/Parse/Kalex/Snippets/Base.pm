@@ -13,7 +13,6 @@ package Parse::Kalex::Snippets::Base;
 
 use strict;
 
-use Locale::TextDomain qw(kayak);
 use Scalar::Util qw(blessed);
 
 sub new {
@@ -23,6 +22,7 @@ sub new {
         yyin => \*STDIN,
         yyout => \*STDOUT,
         __yypattern_cache => [],
+        __yystate => [0],
     }, $class;
 
     # This will inject the following members:
@@ -32,23 +32,28 @@ sub new {
     $self->__yyinit;
 }
 
-sub yylex {
+sub __yywrap {
     my ($self) = @_;
 
-    if (!exists $self->{__yyinput} || !length $self->{__yyinput}) {
-        if ($self->{yyin}->eof) {
-            return if $self->yywrap;
+    while (!exists $self->{__yyinput} || !length $self->{__yyinput}) {
+        if (exists $self->{__yyinput}) {
+            return $self if $self->yywrap;
         }
-
-        return if $self->{yyin}->eof;
 
         $self->{__yyinput} = join '', $self->{yyin}->getlines;
     }
 
-    $self->{yyout}->print($self->{__yyinput});
-    $self->{__yyinput} = '';
+    return;
+}
 
-    return $self->__yylex;
+sub __yypattern {
+    my ($self) = @_;
+
+    # FIXME! Check if a rule was rejected and generate a new pattern!
+
+    my $state = $self->{__yystate}->[-1];
+
+    return $self->{__yypatterns}->[$state];
 }
 
 sub __yyinitMatcher {
@@ -87,6 +92,8 @@ sub __yyinitMatcher {
     foreach my $rules (@active) {
         push @patterns, $self->__yycompilePatterns($rules, -1);
     }
+
+    $self->{__yypatterns} = \@patterns;
 
     return $self;
 }

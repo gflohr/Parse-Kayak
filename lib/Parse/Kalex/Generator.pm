@@ -226,6 +226,7 @@ EOF
     $output .= $self->__defCode;
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
     $output .= $self->__writeInit(2 + $output =~ y/\n/\n/);
+    $output .= $self->__writeYYLex(2 + $output =~ y/\n/\n/);
     $self->{__filename} = ''; # Invalidate cursor.
 
     if (!defined $options{package}) {
@@ -279,6 +280,61 @@ EOF
     \$self->{__condition_types} = $ctypes;
 
     \$self->__yyinitMatcher;
+}
+EOF
+
+    return $output;
+}
+
+sub __writeYYLex {
+    my ($self, $offset) = @_;
+
+    my $filename = $self->{__lexer}->outputFilename;
+    my $output = qq{#line $offset "$filename"\n};
+
+    $output .= <<'EOF';
+sub yylex {
+    my ($self) = @_;
+
+$DB::single = 1;
+    while (1) {
+        # Difference to flex! We return false, not 0 on EOF.
+        $self->__yywrap and return;
+        my $pattern = $self->__yypattern;
+
+        my @matches = $self->{__yyinput} =~ /$pattern/;
+        my ($ruleno, $capture_offset, $captures) = @{$self->{__yymatch}};
+
+        @_ = ($self, splice @matches, $capture_offset, $captures);
+
+        my $yytext = $self->{__yytext} = $^N;
+        substr $self->{__yyinput}, 0, length $^N, '';
+        goto "YYRULE$ruleno";
+EOF
+
+    my $ruleno = 0;
+    foreach my $rule (@{$self->{__rules}}) {
+        my (undef, undef, $action, $location) = @$rule;
+
+        $output .= <<EOF;
+#line $location->[1] "$location->[0]"
+YYRULE$ruleno: $action
+
+        next;
+
+EOF
+        ++$ruleno;
+    }
+
+    # Default action.
+    my ($filename, $lineno) = (__FILE__, __LINE__);
+
+    $output .= <<EOF;
+#line $lineno "$filename"
+YYRULE$ruleno: \$self->{yyout}->print(\$^N);
+    }
+
+    return;
 }
 EOF
 
