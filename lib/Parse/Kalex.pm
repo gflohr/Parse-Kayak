@@ -309,6 +309,8 @@ sub __yylexREGEX {
         $self->YYPOP();
         $self->YYPUSH('ACTION');
         return PATTERN => '';
+    } elsif ($self->{__yyinput} =~ s/^([^\\\[\( \011-\015]+)//) {
+        return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\\[1-9][0-9]*)//o) {
         # Backreference.  They must be counted.
         return PATTERN => $1;
