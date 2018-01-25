@@ -36,11 +36,15 @@ sub __yywrap {
     my ($self) = @_;
 
     while (!exists $self->{__yyinput} || !length $self->{__yyinput}) {
-        if (exists $self->{__yyinput}) {
+        if (exists $self->{__yyinput} && $self->{__yyoptions}->{yywrap}) {
             return $self if $self->yywrap;
         }
 
         $self->{__yyinput} = join '', $self->{yyin}->getlines;
+        if (!$self->{__yyoptions}->{yywrap}
+            && !length $self->{__yinput}) {
+            return $self;
+        }
     }
 
     return;

@@ -27,6 +27,8 @@ use constant YYEOF => ('', undef);
 my $IDENT = '[_a-zA-Z][_a-zA-Z0-9]*';
 my $WS = '[ \011\013-\015]';
 my $WSNEWLINE = '[ \011-\015]';
+my $NOWS = '[^ \011-\015]';
+my $OPTION = '[-_a-zA-Z0-9]+';
 
 sub new {
     my ($class, $options, @input_files) = @_;
@@ -368,6 +370,51 @@ sub __yylexUSER_CODE {
     return USER_CODE => $code;
 }
 
+sub __unquoteGeneral {
+    my ($self, $string) = @_;
+
+    $string =~ s/\\(.)/$1/gs;
+
+    return $string;
+}
+
+sub __yylexOPTION_VALUE {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yinput} =~ s/^"([^\\"]*(?:\\"[^\\"]*)*)"//) {
+        $self->YYPOP;
+        return OPTION_VALUE => $self->__unquoteGeneral($1);
+    } elsif ($self->{__yinput} =~ s/^'([^\\']*(?:\\'[^\\']*)*)'//) {
+        $self->YYPOP;
+        return OPTION_VALUE => $self->__unquoteGeneral($1);
+    } elsif ($self->{__yyinput} =~ s/^($NOWS)//) {
+        $self->YYPOP;
+        return OPTION_VALUE => $1;
+    }
+
+    return $self->__yynextChar;
+}
+
+sub __yylexOPTION {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^($OPTION)$WS*//) {
+        return OPTION_NAME => $1;
+    } elsif ($self->{__yyinput} =~ s/^=//) {\
+        $self->YYPUSH('OPTION_VALUE');
+        return $self->__yylex;
+    } elsif ($self->{__yyinput} =~ s/^\n//) {
+        $self->YYPOP;
+        return $self->__yylex;
+    }
+
+    return $self->__yynextChar;
+}
+
 sub __yylexINITIAL {
     my ($self) = @_;
 
@@ -395,13 +442,16 @@ sub __yylexINITIAL {
             $self->__yyfatalParseError($@);
         }
         return DEF_CODE => $code;
-    } elsif ($self->{__yyinput} =~ s/^\%top$WSNEWLINE*\{//) {
+    } elsif ($self->{__yyinput} =~ s/^\%top$WSNEWLINE*\{//o) {
         $self->{__yyinput} = '{' . $self->{__yyinput};
         my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
         if ($@) {
             $self->__yyfatalParseError($@);
         }
         return TOP_CODE => $code;
+    } elsif ($self->{__yyinput} =~ s/^\%option$WS*//o) {
+        $self->YYPUSH('OPTION');
+        return OPTION => 'OPTION';
     }
 
     return $self->__yynextChar;

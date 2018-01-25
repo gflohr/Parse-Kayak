@@ -21,7 +21,7 @@ definitions: definition definitions
 
 definition: name_definition
           | sc_definition
-          | option
+          | options
           | COMMENT
           | DEF_CODE
               {
@@ -44,12 +44,25 @@ sc_definition: SC conditions_space NEWLINE
                  }
              ;
 
-option: OPTION optionlist
-      | valued_option
-      ;
+options: OPTION optionlist
+           {
+               $_[0]->YYData->{generator}->addOptions($_[2]);
+           }
+       ;
 
-valued_option: OPTION OPTION_OUTFILE '=' NAME
-             ;
+optionlist: option                   { [$_[1]] }
+          | option optionlist        { push @{$_[1]}, $_[2] }
+          ;
+
+option: OPTION_NAME
+            {
+                $_[0]->YYData->{generator}->checkOption($_[1]);
+            }
+      | OPTION_NAME '=' OPTION_VALUE
+            {
+                $_[0]->YYData->{generator}->checkOption($_[1], $_[3]);
+            }
+      ;
 
 rules_section: SEPARATOR rules
              ;
