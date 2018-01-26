@@ -436,7 +436,7 @@ sub __yylexINITIAL {
         }
     } elsif ($self->{__yyinput} =~ s/^$WSNEWLINE*\n//o) {
         return $self->__yylex();
-    } elsif ($self->{__yyinput} =~ s/^$WS+.*\n//o) {
+    } elsif ($self->{__yyinput} =~ s/^((?:$WS+.*\n)+)//o) {
         return DEF_CODE => $1;
     } elsif ($self->{__yyinput} =~ /^%\{/) {
         my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
