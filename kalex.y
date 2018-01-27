@@ -33,7 +33,12 @@ definition: name_definition
               }
           ;
 
-name_definition: NAME REGEX
+name_definition: NAME {$_[0]->YYData->{generator}->checkName($_[1]) } REGEX
+                 {
+                     $_[0]->YYData->{generator}->addNameDefinition(
+                         $_[1], $_[3]
+                     );
+                 }
                ;
 
 sc_definition: SC conditions_space NEWLINE

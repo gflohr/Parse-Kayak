@@ -34,6 +34,7 @@ sub new {
         __condition_names => ['INITIAL'],
         __rules => [],
         __options => {},
+        __names => {},
     }, $class;
 }
 
@@ -98,6 +99,26 @@ sub checkOption {
     ++$self->{__errors};
 
     return [$option, $value];
+}
+
+sub checkName {
+    my ($self, $name) = @_;
+
+    return $self if !exists $self->{__names}->{$name};
+
+    my $location = $self->{__lexer}->yylocation;
+    warn __x("{location}: error: name '{name}' is alread defined.\n",
+             location => $location, name => $name);
+    
+    return $self;
+}
+
+sub addNameDefinition {
+    my ($self, $name, $definition) = @_;
+
+    $self->{__names}->{$name} = $definition;
+
+    return $self;
 }
 
 sub addTopCode {
@@ -337,6 +358,9 @@ sub __writeYYLex {
 sub yylex {
     my ($self) = @_;
 
+EOF
+
+    $output .= <<'EOF';
     while (1) {
         # Difference to flex! We return false, not 0 on EOF.
         $self->__yywrap and return;
