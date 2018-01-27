@@ -286,12 +286,13 @@ ${top_code}
 EOF
 
         $output .= $self->__readModuleCode('Parse/Kalex/Snippets/main.pm');
+        $output .= "\npackage main;\n\n";
     }
 
     $output .= $self->__defCode;
 
     if (!defined $options->{package}) {
-        $output .= "package Parse::Kalex::Lexer;\n"
+        $output .= "\npackage Parse::Kalex::Lexer;\n"
     }
 
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
