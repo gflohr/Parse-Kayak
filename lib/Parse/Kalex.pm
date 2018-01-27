@@ -457,11 +457,11 @@ sub __yylexINITIAL {
         return SC => $1;
     } elsif ($self->{__yyinput} =~ s{^/\*}{}o) {
         $self->{__yyinput} = '/*' . $self->{__yyinput};
-        if ($self->{__yyinput} !~ s{(/\*.*?\*/)$WS?\n}{}s) {
+        if ($self->{__yyinput} !~ s{(/\*.*?\*/)$WS*\n}{}s) {
             $self->__yyfatalParseError(__("cannot find comment delimiter '*/'"
                                           . " before end of file"));
         } else {
-            return COMMENT => $1;
+            return COMMENT => $self->__convertComment($1);
         }
     } elsif ($self->{__yyinput} =~ s/^$WSNEWLINE*\n//o) {
         return $self->__yylex();
@@ -929,6 +929,22 @@ sub __readDefCC {
     }
 
     return $class;
+}
+
+sub __convertComment {
+    my ($self, $comment) = @_;
+
+    # This is not the most beautiful conversion but it preserves
+    # the number of lines.
+    $comment =~ s{^/\*}{ *};
+    $comment =~ s{\*/$}{*};
+
+    $comment =~ s{^[ \t]*\*}{#}gm;
+    chomp $comment;
+
+    $comment .= "\n";
+
+    return $comment;
 }
 
 1;

@@ -23,6 +23,9 @@ definition: name_definition
           | sc_definition
           | options
           | COMMENT
+              {
+                  $_[0]->YYData->{generator}->addDefCode($_[1]);
+              }
           | DEF_CODE
               {
                   $_[0]->YYData->{generator}->addDefCode($_[1]);
