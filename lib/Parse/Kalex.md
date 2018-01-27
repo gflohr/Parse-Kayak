@@ -55,7 +55,6 @@ Generate and run the scanner.
 $ kalex japh.l
 $ echo "I am Guido" | perl lex.yy.pl
 I am just another Perl hacker
-Undefined subroutine &main::yywrap called at Parse/Kalex/Snippets/main.pm line 31, <STDIN> line 1.
 ```
 
 The command `kalex japh.pl` has compiled the scanner description 

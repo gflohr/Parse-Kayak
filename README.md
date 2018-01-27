@@ -9,6 +9,10 @@ The suite of programs in this module can be thought of as the Perl equivalent
 of GNU bison resp. yacc and Flex resp. lex but for Perl.  Both programs are
 designed to work together.
 
+The lexical scanner `kalex` is documented at 
+[lib/Parse/Kalex.md](lib/Parse/Kalex.md), the compiler compiler `kayak`
+will be documented at [lib/Parse/Kalex.md](lib/Parse/Kalex.md).
+
 ## Status
 
 Pre-alpha, work in progress.
