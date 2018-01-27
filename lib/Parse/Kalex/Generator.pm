@@ -33,9 +33,7 @@ sub new {
         __condition_types => ['s'],
         __condition_names => ['INITIAL'],
         __rules => [],
-        __options => {
-            yywrap => 1,
-        },
+        __options => {},
     }, $class;
 }
 
