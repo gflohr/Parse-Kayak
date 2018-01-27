@@ -431,17 +431,16 @@ sub __yylexOPTION {
 sub __yylexNAME {
     my ($self) = @_;
 
+    $self->YYPOP();
+
     my $ws = $self->__yyconsumeWhitespace;
     return $self->__yynextChar if !length $ws;
 
-    # FIXME! Whitespace in character classes is allowed!
-    if ($self->{__yyinput} =~ s/^($NOWS+)//) {
-        # FIXME! Allow comments!
-        $self->YYPOP();
-        return REGEX => $1;
-    }
+    # Mini scanner for regex.
+    my $pattern = $self->__readDefRegex;
+    return '', '' if !length $pattern;
 
-    return $self->__yynextChar;
+    return REGEX => $pattern;
 }
 
 sub __yylexINITIAL {
@@ -458,7 +457,7 @@ sub __yylexINITIAL {
         return SC => $1;
     } elsif ($self->{__yyinput} =~ s{^/\*}{}o) {
         $self->{__yyinput} = '/*' . $self->{__yyinput};
-        if ($self->{__yyinput} !~ s{(/\*.*?\*/)$WS?\n}{}o) {
+        if ($self->{__yyinput} !~ s{(/\*.*?\*/)$WS?\n}{}s) {
             $self->__yyfatalParseError(__("cannot find comment delimiter '*/'"
                                           . " before end of file"));
         } else {
@@ -880,6 +879,56 @@ sub __yyreadPerl {
     }
 
     # NOT REACHED.
+}
+
+sub __readDefRegex {
+    my ($self) = @_;
+
+    my $pattern = '';
+    while (length $self->{__yyinput}) {
+        if ($self->{__yyinput} =~ s/^([^ \011-\015\\\[]]+)//) {
+            $pattern .= $1;
+        } elsif ($self->{__yyinput} =~ s/^(\\.)//) {
+            $pattern .= $1;
+        } elsif ($self->{__yyinput} =~ s/^\[//) {
+            $pattern .= '[' . $self->__readDefCC;
+        } elsif ($self->{__yyinput} =~ s/^\n//) {
+            return $pattern;
+        } elsif ($self->{__yyinput} =~ s/^($WS+)//) {
+            last;
+        } elsif ($self->{__yyinput} =~ s/^(.)//) {
+            $pattern .= $1;
+        }
+    }
+ 
+    # Consume whitespace and comments.
+    while (length $self->{__yyinput}) {
+        $self->{__yyinput} =~ s/^$WS+//;
+        $self->{__yyinput} =~ s{/\*.*?\*/}{}s;
+        last if $self->{__yyinput} =~ s/^\n//;
+    }
+
+    return $pattern;
+}
+
+sub __readDefCC {
+    my ($self) = @_;
+
+    my $class = '[';
+    while (length $self->{__yyinput}) {
+        if ($self->{__yyinput} =~ s/^(\\.)//o) {
+            $class .= $1;
+        } elsif ($self->{__yyinput} =~ s/^\]//o) {
+            $class .= ']';
+            return $class;
+        } elsif ($self->{__yyinput} =~ s/^\n//o) {
+            return $class;
+        } elsif ($self->{__yyinput} =~ s/^(.)//o) {
+            return PATTERN => $1;
+        }
+    }
+
+    return $class;
 }
 
 1;

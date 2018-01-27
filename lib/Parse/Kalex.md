@@ -60,30 +60,8 @@ Undefined subroutine &main::yywrap called at Parse/Kalex/Snippets/main.pm line 3
 
 The command `kalex japh.pl` has compiled the scanner description 
 `japh.l` into a Perl scanner `lex.yy.pl`.  This scanner copies its 
-input verbatim to the output but replacing every occurence of the
+input verbatim to the output but replaces every occurence of the
 string "Guido" to "Just another Perl hacker".
-
-There are two things that you should improve about this scanner: The
-clever readers may have guessed already that they can replace "Guido"
-in the scanner description with their own given name.  But how to get
-rid of the ugly error message "Can't locate method 'yywrap' ..."?
-
-The easiest way is to slightly modify the scanner description:
-
-```lex
-%option noyywrap
-%%
-Guido                      print "just another Perl hacker";
-%%
-yylex;
-```
-
-Explanation: The scanner is by default designed to scan multiple
-input streams.  If it encounters the end of file on one input stream
-it invokes the function `yywrap()` which has to be supplied by the
-user.  If that function returns true, the sanner assumes that all
-input streams have been processed and will terminate.  The line
-`%option noyywrap` tells kalex that there is just one input stream.
 
 ## Counting Lines and Characters
 
@@ -182,6 +160,29 @@ question mark "?") are allowed:
 ```
 TAG          <[a-z]+(?: [a-z]+=".*?"])>
 ```
+
+Comments (`/* ... */`) after the definition are allowed and are
+discarded.  They are *not* copied to the generated scanner.  Note
+that they will possibly confuse syntax highlighters because comments
+are not allowed after name definitions for flex and lex.
+
+### Indented Text
+
+All indented text in the definitions section is copied verbatim to
+the generated scanner.  If you generate a reentrant scanner, the
+text is inserted right after the `package` definition in the generated
+code.
+
+### %{ CODE %} Sections
+
+All text enclosed in `%{ ...%}` is also copied to the output without
+the enclosing delimiters, but the enclosed text must be valid Perl
+code.
+
+### Commments
+
+Everything enclosed in `/* ... */` is treated as a comment and copied
+to the output.  The comment is converted to a Perl comment though.
 
 # DIFFERENCES TO FLEX
 
