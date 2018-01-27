@@ -310,10 +310,16 @@ sub __yylexREGEX {
     if ($self->{__yyinput} =~ /^$WS+/o) {
         $self->YYPOP();
         return PATTERN => '';
-    } elsif ($self->{__yyinput} =~ s/^([^\\\[\( \011-\015]+)//) {
+    } elsif ($self->{__yyinput} =~ s/^([^\$\\\[\( \011-\015]+)//) {
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\\[1-9][0-9]*)//o) {
         # Backreference.  They must be counted.
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^(\$[_a-zA-Z][_a-zA-Z0-9]*)//) {
+        # Variable that we are interested in.
+        return PATTERN => $1;
+    } elsif ($self->{__yyinput} =~ s/^(\$\{[_a-zA-Z][_a-zA-Z0-9]*\})//) {
+        # Variable that we are interested in.
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^(\\.)//o) {
         return PATTERN => $1;

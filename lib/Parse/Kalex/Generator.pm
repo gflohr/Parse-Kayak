@@ -494,8 +494,13 @@ sub new {
     my $parens = 0;
     ++$parens if '(' eq $chunk;
     my @backrefs;
+    my @variables;
     if ($chunk =~ /^\\([1-9][0-9]*)$/) {
         push @backrefs, [0, length $chunk, $1];
+    } elsif ($chunk =~ /^\$([_a-zA-Z]+)/) {
+        push @variables, [0, length $chunk, $1];
+    } elsif ($chunk =~ /^\$\{([_a-zA-Z]+)\}/) {
+        push @variables, [0, length $chunk, $1];
     }
 
     bless [
@@ -503,6 +508,7 @@ sub new {
         $parens,
         \@backrefs,
         \@location,
+        \@variables,
     ], $class;
 }
 
@@ -510,6 +516,7 @@ sub pattern { shift->[0] }
 sub parentheses { shift->[1] }
 sub backrefs { shift->[2] }
 sub location { @{shift->[3]} }
+sub variables { @{shift->[4]} }
 
 sub grow {
     my ($self, $chunk) = @_;
@@ -517,7 +524,14 @@ sub grow {
     if ($chunk =~ /^\\([1-9][0-9]*)$/) {
         my $backrefs = $self->backrefs;
         push @$backrefs, [length $self->[0], length $chunk, $1];
+    } elsif ($chunk =~ /^\$([_a-zA-Z]+)/) {
+        my $variables = $self->variables;
+        push @$variables, [length $self->[0], length $chunk, $1];
+    } elsif ($chunk =~ /^\$\{([_a-zA-Z]+)\}/) {
+        my $variables = $self->variables;
+        push @$variables, [length $self->[0], length $chunk, $1];
     }
+
     $self->[0] .= $chunk;
     ++$self->[1] if '(' eq $chunk;
 
