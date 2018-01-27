@@ -24,7 +24,8 @@ use Parse::Kalex::Generator;
 
 use constant YYEOF => ('', undef);
 
-my $IDENT = '[_a-zA-Z][_a-zA-Z0-9]*';
+my $IDENT = '[^\000-\100\133-\136\140\173-\177]'
+            . '[^\000-\057\072-\100\133-\136\140\173-\177]*';
 my $WS = '[ \011\013-\015]';
 my $WSNEWLINE = '[ \011-\015]';
 my $NOWS = '[^ \011-\015]';
@@ -433,6 +434,7 @@ sub __yylexNAME {
     my $ws = $self->__yyconsumeWhitespace;
     return $self->__yynextChar if !length $ws;
 
+    # FIXME! Whitespace in character classes is allowed!
     if ($self->{__yyinput} =~ s/^($NOWS+)//) {
         # FIXME! Allow comments!
         $self->YYPOP();
@@ -448,7 +450,7 @@ sub __yylexINITIAL {
     if ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYPUSH('RULES');
         return SEPARATOR => '%%';
-    } elsif ($self->{__yyinput} =~ s/^([_a-zA-Z][_a-zA-Z0-9]*)//) {
+    } elsif ($self->{__yyinput} =~ s/^($IDENT)//) {
         $self->YYPUSH('NAME');
         return NAME => $1;
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
