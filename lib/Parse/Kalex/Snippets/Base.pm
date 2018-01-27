@@ -124,7 +124,7 @@ sub __yycompilePatterns {
         my $rule = $self->{__rules}->[$r];
         my $regex = $rule->[1];
 
-        my $pattern = $self->__yyfixupBackrefs($rule, $parentheses);
+        my $pattern = $self->__yyfixupRegex($rule, $parentheses);
         
         # There are several ways finding out which pattern matched.  You
         # can check the return value of the match and check which elemeents
@@ -135,8 +135,8 @@ sub __yycompilePatterns {
         # of all matches and submatches.
         #
         # The most efficient way is to embed tiny code snippets which give
-        # you all the relevant information.  We store that in the variables
-        # $yyrule and $__yyoffset.
+        # you all the relevant information.  We store that in the instance
+        # variable __yymatch.
         $pattern .= "(?{\$self->{__yymatch} = [$r, $parentheses, $rule->[2]]})";
         push @patterns, "($pattern)";
 
@@ -158,23 +158,30 @@ sub __yycompilePatterns {
     use re qw(eval);
 
     # FIXME! Case-insensitive matches?
-    # FIXME! The variables most probably have to be declared within
-    # yylex() and the pattern also have to be compiled there.
-    my $yyrule;
-    my $__yyoffset;
-    return qr/^$re/;
+    return qr/^$re/o;
 }
 
-sub __yyfixupBackrefs {
+sub __yyfixupRegex {
     my ($self, $rule, $parentheses) = @_;
 
     my $pattern = $rule->[1];
-    my $backrefs = $rule->[3];
+    my $fixes = $rule->[3];
     my $offset = 0;
-    foreach my $spec (@$backrefs) {
-        my ($position, $length, $index) = @$spec;
-        my $fixed = '\\' . ($index + $parentheses);
+    foreach my $spec (@$fixes) {
+        my ($type, $position, $length, $id) = @$spec;
+        my $fixed;
+        
+        if ('b' eq $type) {
+            $fixed = '\\' . ($id + $parentheses);
+        } elsif ('v' eq $type && exists $self->{__yyvariables}->{$id}) {
+            $fixed .= ${$self->{__yyvariables}->{$id}};
+        } else {
+            next;
+        }
+
         substr $pattern, $position + $offset, $length, $fixed;
+
+        $offset += (length $fixed) - $length;
     }
 
     return $pattern;

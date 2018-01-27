@@ -335,11 +335,18 @@ EOF
 
     my $ctypes = $self->__dumpVariable($self->{__condition_types});
     my $options = $self->__dumpVariable($self->{__options});
+    my @names;
+    foreach my $name (keys %{$self->{__names}}) {
+        my $value = $self->__dumpVariable($self->{__names}->{$name});
+        push @names, "$name => \\$value";
+    }
+    my $variables = join ', ', @names;
 
     $output .= <<EOF;
     ];
     \$self->{__condition_types} = $ctypes;
     \$self->{__yyoptions} = $options;
+    \$self->{__yyvariables} = { $variables };
 
     \$self->__yyinitMatcher;
 }
@@ -364,7 +371,7 @@ EOF
         my $value = $self->__dumpVariable($self->{__names}->{$name});
         my $dollar_name = '$' . $name;
         $output .= <<EOF;
-    $dollar_name = $value;
+    my $dollar_name = $value;
     \$self->{__yyvariables}->{$name} = \\$dollar_name;
 EOF
     }
@@ -527,43 +534,38 @@ sub new {
 
     my $parens = 0;
     ++$parens if '(' eq $chunk;
-    my @backrefs;
-    my @variables;
+    my @fixups;
     if ($chunk =~ /^\\([1-9][0-9]*)$/) {
-        push @backrefs, [0, length $chunk, $1];
+        push @fixups, [b => 0, length $chunk, $1];
     } elsif ($chunk =~ /^\$([_a-zA-Z]+)/) {
-        push @variables, [0, length $chunk, $1];
+        push @fixups, [v => 0, length $chunk, $1];
     } elsif ($chunk =~ /^\$\{([_a-zA-Z]+)\}/) {
-        push @variables, [0, length $chunk, $1];
+        push @fixups, [v => 0, length $chunk, $1];
     }
 
     bless [
         $chunk,
         $parens,
-        \@backrefs,
+        \@fixups,
         \@location,
-        \@variables,
     ], $class;
 }
 
 sub pattern { shift->[0] }
 sub parentheses { shift->[1] }
-sub backrefs { shift->[2] }
+sub fixups { shift->[2] }
 sub location { @{shift->[3]} }
-sub variables { @{shift->[4]} }
 
 sub grow {
     my ($self, $chunk) = @_;
 
+    my $fixups = $self->fixups;
     if ($chunk =~ /^\\([1-9][0-9]*)$/) {
-        my $backrefs = $self->backrefs;
-        push @$backrefs, [length $self->[0], length $chunk, $1];
+        push @$fixups, [b => length $self->[0], length $chunk, $1];
     } elsif ($chunk =~ /^\$([_a-zA-Z]+)/) {
-        my $variables = $self->variables;
-        push @$variables, [length $self->[0], length $chunk, $1];
+        push @$fixups, [v => length $self->[0], length $chunk, $1];
     } elsif ($chunk =~ /^\$\{([_a-zA-Z]+)\}/) {
-        my $variables = $self->variables;
-        push @$variables, [length $self->[0], length $chunk, $1];
+        push @$fixups, [v => length $self->[0], length $chunk, $1];
     }
 
     $self->[0] .= $chunk;
