@@ -159,12 +159,14 @@ sub __yyconsumeWhitespace {
     my ($self, $multi_line) = @_;
 
     if ($multi_line) {
-        $self->{__yyinput} =~ s/^($WSNEWLINE*)\n//o;
+        $self->{__yyinput} =~ s/^($WSNEWLINE*\n)//o;
+        return $1;
     } else {
         $self->{__yyinput} =~ s/^($WS+)//o;
+        return $1;
     }
 
-    return $1;
+    return '';
 }
 
 sub __yynextChar {
@@ -307,7 +309,6 @@ sub __yylexREGEX {
 
     if ($self->{__yyinput} =~ /^$WS+/o) {
         $self->YYPOP();
-        $self->YYPUSH('ACTION');
         return PATTERN => '';
     } elsif ($self->{__yyinput} =~ s/^([^\\\[\( \011-\015]+)//) {
         return PATTERN => $1;
@@ -352,6 +353,7 @@ sub __yylexRULES {
         $self->YYPUSH('USER_CODE');
         return SEPARATOR => '%%';
     } else {
+        $self->YYPUSH('ACTION');
         $self->YYPUSH('REGEX');
         return $self->__yylexREGEX;
     }
@@ -417,12 +419,30 @@ sub __yylexOPTION {
     return $self->__yynextChar;
 }
 
+sub __yylexNAME {
+    my ($self) = @_;
+
+    my $ws = $self->__yyconsumeWhitespace;
+    return $self->__yynextChar if !length $ws;
+
+    if ($self->{__yyinput} =~ s/^($NOWS+)//) {
+        # FIXME! Allow comments!
+        $self->YYPOP();
+        return REGEX => $1;
+    }
+
+    return $self->__yynextChar;
+}
+
 sub __yylexINITIAL {
     my ($self) = @_;
 
     if ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYPUSH('RULES');
         return SEPARATOR => '%%';
+    } elsif ($self->{__yyinput} =~ s/^([_a-zA-Z][_a-zA-Z0-9]*)//) {
+        $self->YYPUSH('NAME');
+        return NAME => $1;
     } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
         $self->YYPUSH('FIRST_CONDITION_DECLS');
         return SC => $1;
