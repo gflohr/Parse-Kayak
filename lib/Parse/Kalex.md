@@ -1,6 +1,7 @@
 # NAME
 
-Parse::Kalex - Base class for kalex scanners
+Kalex - A lexical scanner generator for Perl
+
 
 # SYNOPSIS
 
@@ -15,6 +16,25 @@ Or from Perl:
     $parser = Parse::Kalex->newFromArgv(\@ARGV);
     $parser->scan or exit 1;
     $parser->output or exit 1;
+
+<!--TOC-->
+# TABLE OF CONTENTS
+   * [DESCRIPTION](#description)
+   * [INTRODUCTION](#introduction)
+   * [EXAMPLES](#examples)
+      * [Basic Example](#basic-example)
+      * [Counting Lines and Characters](#counting-lines-and-characters)
+   * [FORMAT OF THE INPUT FILE](#format-of-the-input-file)
+      * [Format of the Definitions Section](#format-of-the-definitions-section)
+         * [Name Definitions](#name-definitions)
+         * [Indented Text](#indented-text)
+         * [\x{ CODE \x} Sections](#-code--sections)
+         * [Commments](#commments)
+   * [DIFFERENCES TO FLEX](#differences-to-flex)
+      * [No yywrap() By Default](#no-yywrap-by-default)
+      * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
+   * [COPYRIGHT](#copyright)
+   * [SEE ALSO](#see-also)
 
 # DESCRIPTION
 
@@ -177,6 +197,26 @@ code.
 All text enclosed in `%{ ...%}` is also copied to the output without
 the enclosing delimiters, but the enclosed text must be valid Perl
 code.
+
+### %top Sections
+
+A `%top` section can contain arbitrary Perl code:
+
+```lex
+%top {
+    use strict;
+
+    my $foo = 1;
+    my $bar = 2;
+}
+%%
+RULE...
+```
+
+The enclosed code will be placed at the top of the file, outside
+of a possible `package` statement for re-entrant parsers.
+
+Multiple `%top` sections are allowed.  Their order is preserved.
 
 ### Commments
 
