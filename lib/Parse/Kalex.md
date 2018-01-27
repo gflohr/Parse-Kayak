@@ -27,9 +27,16 @@ Or from Perl:
    * [FORMAT OF THE INPUT FILE](#format-of-the-input-file)
       * [Format of the Definitions Section](#format-of-the-definitions-section)
          * [Name Definitions](#name-definitions)
+         * [Start Condition Definitions](#start-condition-definitions)
          * [Indented Text](#indented-text)
-         * [\x{ CODE \x} Sections](#-code--sections)
-         * [Commments](#commments)
+         * [%{ CODE %} Sections](#-code-sections)
+         * [%top Sections](#-top-sections)
+         * [Comments](#comments)
+         * [%Option Directives](#-option-directives)
+            * [%option yywrap/yynowrap](#-option-yywrap-yynowrap)
+      * [Format of the Rules Section](#format-of-the-rules-section)
+         * [Rules](#rules)
+      * [Format of the User Code Section](#format-of-the-user-code-section)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
       * [No yywrap() By Default](#no-yywrap-by-default)
       * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
@@ -185,6 +192,25 @@ discarded.  They are *not* copied to the generated scanner.  Note
 that they will possibly confuse syntax highlighters because comments
 are not allowed after name definitions for flex and lex.
 
+
+### Start Condition Definitions
+
+In the definitions section, you can declare an arbitrary number
+of start conditions in one of the following forms:
+
+```lex
+%sc COND1 COND2
+%xc XCOND1 XCOND2
+```
+
+The form `%sc` declares an *inclusive* start condition, the form
+`%xc` declares an *exclusive* start condition.  See the section
+[Start Conditions](#start-conditions) below for more information
+on start conditions.
+
+The same restrictions on possible names apply as for [Name
+Definitions](#name-definitions) above.
+
 ### Indented Text
 
 All indented text in the definitions section is copied verbatim to
@@ -218,10 +244,84 @@ of a possible `package` statement for re-entrant parsers.
 
 Multiple `%top` sections are allowed.  Their order is preserved.
 
-### Commments
+### Comments
 
 Everything enclosed in `/* ... */` is treated as a comment and copied
 to the output.  The comment is converted to a Perl comment though.
+
+### %Option Directives
+
+Option are defined with the `%option` directive
+
+```lex
+%option noyywrap outfile="parse.pl"
+```
+
+Boolean options can be preceded by "no" to negate them.  Options
+that take a value receive the value in a single- or double-quoted
+string.  Escape sequences like `\n` are only expanded in
+double-quoted strings.
+
+The following options are supported;
+
+#### %option yywrap/yynowrap
+
+Activates or deactivates the yywrap mechanism.  See
+[The yywrap() Function](#the-yywrap-function) below.  The
+default is false.
+
+## Format of the Rules Section
+
+### Rules
+
+The rules section consists an arbitrary number of rules defined
+as:
+
+```lex
+<SC1,SC2,SC3>pattern action
+```
+
+The first part of the rule is an optional comma-separated list of 
+start conditions enclosed in angle brackets.  If present, the
+rule is only active in one of the listed start conditions.
+
+[Start Conditions](#start-conditions) below for more information
+on start conditions.
+
+The pattern can be almost any Perl regular expression.  See
+[Patterns](#patterns) below for more information.
+
+The third optional part is an action.  In any of the following
+two forms:
+
+```lex
+$(DIGIT)+\.($DIGIT)    {
+                           return FLOAT => "$_[1].$_[2]";
+                       }
+\n                     return NEWLINE => "\n";
+```
+
+Instead of `{ ... }` you can also use `%{ ... %}`.
+
+See [Actions](#actions) below for more information on actions.
+
+Since start conditions and actions are optional, a rule can also
+consist of a pattern only.
+
+## Format of the User Code Section
+
+The user code section is copied verbatim to the generated scanner.
+
+If the scanner is not reentrant, it will be preceded by
+
+```perl
+package main;
+
+no strict;
+```
+
+That means that you should put a `use strict;` at the beginning
+of your user code section if you want to enable strictness.
 
 # DIFFERENCES TO FLEX
 
