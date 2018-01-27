@@ -327,8 +327,10 @@ sub __yylexREGEX {
         # This is a chunk of its own so that we can count parentheses.
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^\n//o) {
+        # No action.
         $self->YYPOP();
-        return PATTERN => '';
+        $self->YYPOP();
+        return ACTION => '';
     } elsif ($self->{__yyinput} =~ s/^(.)//o) {
         return PATTERN => $1;
     }
