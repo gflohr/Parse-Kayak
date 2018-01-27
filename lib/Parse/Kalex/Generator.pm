@@ -225,28 +225,14 @@ sub addRule {
 sub addRegex {
     my ($self, $chunk) = @_;
 
-    my @location = $self->{__lexer}->yylocation;
-    my $parens = 0;
-    ++$parens if '(' eq $chunk;
-    my @backrefs;
-    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
-        push @backrefs, [0, length $chunk, $1];
-    }
-
-    return [$chunk, $parens, \@backrefs, @location];
+    return Parse::Kalex::Generator::Regex->new(
+        $chunk, $self->{__lexer}->yylocation);
 }
 
 sub growRegex {
-    my ($self, $def, $chunk) = @_;
+    my ($self, $regex, $chunk) = @_;
 
-    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
-        my $backrefs = $def->[2];
-        push @$backrefs, [length $def->[0], length $chunk, $1];
-    }
-    $def->[0] .= $chunk;
-    ++$def->[1] if '(' eq $chunk;
-
-    return $def;
+    return $regex->grow($chunk);
 }
 
 sub errors {
@@ -516,6 +502,44 @@ sub __readModuleCode {
     }
 
     return $code;
+}
+
+package Parse::Kalex::Generator::Regex;
+
+sub new {
+    my ($class, $chunk, @location) = @_;
+
+    my $parens = 0;
+    ++$parens if '(' eq $chunk;
+    my @backrefs;
+    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
+        push @backrefs, [0, length $chunk, $1];
+    }
+
+    bless [
+        $chunk,
+        $parens,
+        \@backrefs,
+        \@location,
+    ], $class;
+}
+
+sub pattern { shift->[0] }
+sub parentheses { shift->[1] }
+sub backrefs { shift->[2] }
+sub location { @{shift->[3]} }
+
+sub grow {
+    my ($self, $chunk) = @_;
+
+    if ($chunk =~ /^\\([1-9][0-9]*)$/) {
+        my $backrefs = $self->backrefs;
+        push @$backrefs, [length $self->[0], length $chunk, $1];
+    }
+    $self->[0] .= $chunk;
+    ++$self->[1] if '(' eq $chunk;
+
+    return $self;
 }
 
 1;
