@@ -412,7 +412,7 @@ EOF
 
     $output .= <<EOF;
 #line $lineno "$filename"
-YYRULE$ruleno: \$self->{yyout}->print(\$^N);
+YYRULE$ruleno: \$self->__yyprint(\$^N);
     }
 
     return;

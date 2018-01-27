@@ -13,14 +13,16 @@ package Parse::Kalex::Snippets::Base;
 
 use strict;
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 
 sub new {
     my ($class, %options) = @_;
 
     my $self = bless {
         yyin => \*STDIN,
+        yyinname => '<stdin>',
         yyout => \*STDOUT,
+        yyoutname => '<stdout>',
         __yypattern_cache => [],
         __yystate => [0],
     }, $class;
@@ -30,6 +32,51 @@ sub new {
     # - __rules
     # - __condition_types
     $self->__yyinit;
+}
+
+sub __yygetlines {
+    my ($self) = @_;
+
+    my $yyin = $self->{yyin};
+    if (ref $yyin) {
+        if ('GLOB' eq reftype $yyin || blessed $yyin) {
+            return $yyin->getlines;
+        } elsif ('SCALAR' eq reftype $yyin) {
+            return $$yyin;
+        }
+    }
+
+    # Filename.
+    open my $fh, '<', $yyin
+        or die "$yyin: $!\n";
+
+    $self->{yyin} = $fh;
+    $self->{yyinname} = $yyin;
+
+    return $fh->getlines;    
+}
+
+sub __yyprint {
+    my ($self, $data) = @_;
+
+    my $yyout = $self->{yyout};
+    if (ref $yyout) {
+        if ('GLOB' eq reftype $yyout || blessed $yyout) {
+            return $yyout->print($data);
+        } elsif ('SCALAR' eq reftype $yyout) {
+            $yyout .= $data;
+            return 1;
+        }
+    }
+
+    # Filename.
+    open my $fh, '>', $yyout
+        or die "$yyout: $!\n";
+
+    $self->{yyout} = $fh;
+    $self->{yyoutname} = $yyout;
+
+    return $fh->print($data);    
 }
 
 sub __yywrap {
