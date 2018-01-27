@@ -360,7 +360,17 @@ sub yylex {
 
 EOF
 
+    foreach my $name (keys %{$self->{__names}}) {
+        my $value = $self->__dumpVariable($self->{__names}->{$name});
+        my $dollar_name = '$' . $name;
+        $output .= <<EOF;
+    $dollar_name = $value;
+    \$self->{__yyvariables}->{$name} = \\$dollar_name;
+EOF
+    }
+
     $output .= <<'EOF';
+
     while (1) {
         # Difference to flex! We return false, not 0 on EOF.
         $self->__yywrap and return;
