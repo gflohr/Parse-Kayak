@@ -286,10 +286,14 @@ ${top_code}
 EOF
 
         $output .= $self->__readModuleCode('Parse/Kalex/Snippets/main.pm');
-        $output .= "package Parse::Kalex::Lexer;\n";
     }
 
     $output .= $self->__defCode;
+
+    if (!defined $options->{package}) {
+        $output .= "package Parse::Kalex::Lexer;\n"
+    }
+
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
     $output .= $self->__writeInit(2 + $output =~ y/\n/\n/);
     $output .= $self->__writeYYLex(2 + $output =~ y/\n/\n/);
@@ -297,11 +301,13 @@ EOF
 
     if (!defined $options->{package}) {
         $output .= "package main;\n\nno strict;\n\n";
-    } else {
-        $output .= "\n1;\n";
     }
 
     $output .= $self->__userCode;
+
+    if (defined $options->{package}) {
+        $output .= "\n1;\n";    
+    }
 
     return $output;
 }
