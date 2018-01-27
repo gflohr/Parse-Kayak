@@ -1,1 +1,3 @@
 %%
+yyout 'echo.out';
+yylex;

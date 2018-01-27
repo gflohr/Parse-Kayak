@@ -15,9 +15,16 @@ use strict;
 
 my $yylexer = Parse::Kalex::Lexer->new;
 
-tie my $yytext, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
-tie my $yyin, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yytext';
-tie my $yyout, 'Parse::Kalex::Snippets::main::Tier', $yylexer, 'yyout';
+tie my $yytext, 'Parse::Kalex::Snippets::main::Tier', 
+    $yylexer, 'yytext';
+tie my $yyin, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yyin';
+tie my $yyinname, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yyinname';
+tie my $yyout, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yyout';
+tie my $yyoutname, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yyoutname';
 
 sub yylex {
     $yylexer->yylex;
