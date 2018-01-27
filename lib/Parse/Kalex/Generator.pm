@@ -184,40 +184,22 @@ sub addRule {
     my ($self, $start_conditions, $regex, $code,
         $filename, $lineno, $charno) = @_;
 
-    my @regex = @$regex;
-    my $qr = eval { qr{^$regex[0]} };
-    if ($@) {
-        my $x = $@;
-        my $file = quotemeta __FILE__;
-        $x =~ s{ at $file line [0-9]+\.\n$}{};
-
-        my $location = join ':', @regex[1 .. 3];
-        warn __x("{location}: error: {error}.\n",
-                 location => $location, error => $x);
-        ++$self->{__errors};    
-    } elsif ('' =~ {$qr}) {
-        my $location = join ':', @regex[1 .. 3];
-        warn __x("{location}: error: regular expression matches empty string.\n",
-                 location => $location);
-        ++$self->{__errors};                
-    } else {
-        # Translate the start conditions into numbers.
-        my @start_conditions;
-        foreach my $condition (@$start_conditions) {
-            if ('*' eq $condition) {
-                push @start_conditions, '-1';
-            } elsif (exists $self->{__start_conditions}->{$condition}) {
-                push @start_conditions, $self->{__start_conditions}->{$condition};
-            } else {
-                push @start_conditions, $self->{__xstart_conditions}->{$condition};                
-            }
+    # Translate the start conditions into numbers.
+    my @start_conditions;
+    foreach my $condition (@$start_conditions) {
+        if ('*' eq $condition) {
+            push @start_conditions, '-1';
+        } elsif (exists $self->{__start_conditions}->{$condition}) {
+            push @start_conditions, $self->{__start_conditions}->{$condition};
+        } else {
+            push @start_conditions, $self->{__xstart_conditions}->{$condition};
         }
-        push @{$self->{__rules}}, [
-            [@start_conditions], 
-            $regex,
-            $code,
-            [$filename, $lineno, $charno]];
     }
+    push @{$self->{__rules}}, [
+        [@start_conditions],
+        $regex,
+        $code,
+        [$filename, $lineno, $charno]];
 
     return $self;
 }
