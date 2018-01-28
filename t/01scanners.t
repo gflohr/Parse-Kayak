@@ -12,8 +12,16 @@ use strict;
 use Test::More;
 use File::Spec;
 use Parse::Kalex;
+use Config;
+
+my $this_perl = $^X;
+if ($^O ne 'VMS') {
+    $this_perl .= $Config{_exe}
+        unless $this_perl =~ /$Config{_exe}$/i;
+}
 
 sub test_scanner;
+sub compare_files;
 
 foreach my $scanner (qw(
     echo
@@ -27,12 +35,37 @@ sub test_scanner {
     my ($name) = @_;
 
     my $lfile = File::Spec->catfile('t', 'scanners', $name . '.l');
-    my $scanner = Parse::Kalex->new($lfile);
+    my $expect_file = File::Spec->catfile('t', 'scanners', $name . '.expect');
+    my $got_file = File::Spec->catfile('t', 'scanners', $name . '.out');
+    my $scanner_file = File::Spec->catfile('t', 'scanners', $name . '.pl');
+    my $scanner = Parse::Kalex->new({outfile => $scanner_file}, $lfile);
     ok $scanner, "$name new";
     ok $scanner->scan, "$name scan";
     ok $scanner->output, "$name output";
-    ok -e 'lex.yy.pl', "$name -> lex.yy.pl";
-    ok unlink "lex.yy.pl", "$name unlink lex.yy.pl";
+    ok -e $scanner_file, "$name -> $scanner_file";
+    ok 0 == system $this_perl, $scanner_file;
+    compare_files $name, $got_file, $expect_file;
+    ok unlink $scanner_file, "$name unlink $scanner_file";
+
+    return 1;
+}
+
+sub compare_files {
+    my ($name, $got_file, $expect_file) = @_;
+
+    open my $fh, '<', $got_file;
+    ok $fh, "$name output file exists";
+    return if !$fh;
+    my $got = join '', <$fh>;
+
+    open my $fh, '<', $expect_file;
+    ok $fh, "$name expect file exists";
+    return if !$fh;
+    my $expect = join '', <$fh>;
+
+    cmp_ok $got, 'eq', $expect, "$name check output";
+    
+    ok unlink $got_file;
 
     return 1;
 }

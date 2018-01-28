@@ -34,15 +34,17 @@ my $OPTION = '[-_a-zA-Z0-9]+';
 sub new {
     my ($class, $options, @input_files) = @_;
 
-    if (@_ == 1) {
-        $options = {$class->__defaultOptions};
-    } elsif (!ref $options) {
+    if (@_ > 2 && !ref $options) {
         unshift @input_files, $options;
-        $options = {$class->__defaultOptions};
+        $options = {};
+    }
+    my %options = $class->__defaultOptions;
+    foreach my $option (keys %$options) {
+        $options{$option} = $options->{$option};
     }
     @input_files = ('') if !@input_files;
     my $self = {
-        __yyoptions => {%$options},
+        __yyoptions => \%options,
         yyinput_files => \@input_files,
     };
 
@@ -606,8 +608,10 @@ sub output {
         $self->__yyfatal(__("'\%option stdout' is mutually exclusive with"
                             . " the command-line option '--outfile'"));
     }
-    $options{outfile} = defined $options{package}
-        ? $options{package} . '.pm' : 'lex.yy.pl';
+    if (!defined $options{outfile}) {
+        $options{outfile} = defined $options{package}
+            ? $options{package} . '.pm' : 'lex.yy.pl';
+    }
 
     my $encoding = $options{encoding};
     

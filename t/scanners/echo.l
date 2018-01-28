@@ -1,5 +1,5 @@
 %%
 %%
-yyout 'echo.out';
-yyin 'echo.in';
+$yyout = 't/scanners/echo.out';
+$yyin = 't/scanners/echo.in';
 yylex;

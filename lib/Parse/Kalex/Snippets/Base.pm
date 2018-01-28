@@ -92,7 +92,7 @@ sub __yywrap {
 
     if (!exists $self->{__yyinput}) {
         # First round.
-        $self->{__yyinput} = join '', $self->{yyin}->getlines;
+        $self->{__yyinput} = join '', $self->__yygetlines;
     }
 
     while (!length $self->{__yyinput}) {
@@ -102,7 +102,7 @@ sub __yywrap {
             return $self;
         }
 
-        $self->{__yyinput} = join '', $self->{yyin}->getlines;
+        $self->{__yyinput} = join '', $self->__yygetlines;
     }
 
     return;
