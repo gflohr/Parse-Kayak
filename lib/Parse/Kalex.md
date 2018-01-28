@@ -168,6 +168,14 @@ ${CHAR}${DIGIT}       print "coordinate $^N\n";
 You can omit the curly braces if the character following the variable
 name cannot be part of a valid variable name.
 
+```lex
+DIGIT [0-9]
+CHAR [a-zA-Z]
+%%
+$CHAR$DIGIT           print "coordinate $^N\n";
+.|\n
+```
+
 Using variable references, capturing parentheses, or back references
 inside definitions will lead to undefined behavior of the scanner.
 All of the following definitions must be avoided:
