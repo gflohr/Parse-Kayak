@@ -56,7 +56,7 @@ sub __yygetlines {
     return $fh->getlines;    
 }
 
-sub yyout {
+sub yyprint {
     my ($self, $data) = @_;
 
     my $yyout = $self->{yyout};
@@ -84,7 +84,7 @@ sub yyout {
 sub ECHO {
     my ($self) = @_;
 
-    return $self->yyout($^N);
+    return $self->yyprint($^N);
 }
 
 sub __yywrap {

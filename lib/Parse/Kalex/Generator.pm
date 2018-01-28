@@ -373,11 +373,21 @@ sub __writeYYLex {
     my $filename = $self->{__lexer}->outputFilename;
     my $output = qq{#line $offset "$filename"\n};
 
-    $output .= <<'EOF';
+    if (defined $self->{__options}->{package}) {
+        $output .= <<'EOF';
 sub yylex {
     my ($self) = @_;
 
 EOF
+    } else {
+        $output .= <<'EOF';
+package main;
+
+sub yylex {
+    my ($self) = $yylexer;
+
+EOF
+    }
 
     foreach my $name (keys %{$self->{__names}}) {
         my $value = $self->__dumpVariable($self->{__names}->{$name});

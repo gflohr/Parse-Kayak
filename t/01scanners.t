@@ -65,7 +65,7 @@ sub compare_files {
     return if !$fh;
     my $expect = join '', <$fh>;
 
-    cmp_ok $got, 'eq', $expect, "$name check output";
+    cmp_ok $got, 'eq', $expect, "$name output check";
     
     ok unlink $got_file;
 

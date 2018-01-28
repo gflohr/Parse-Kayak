@@ -26,18 +26,14 @@ tie my $yyout, 'Parse::Kalex::Snippets::main::Tier',
 tie my $yyoutname, 'Parse::Kalex::Snippets::main::Tier',
     $yylexer, 'yyoutname';
 
-sub yylex {
-    $yylexer->yylex;
-}
-
 sub ECHO {
     $yylexer->ECHO;
 }
 
-sub yyout {
+sub yyprint {
     my ($buffer) = @_;
 
-    $yylexer->yyout($buffer);
+    $yylexer->yyprint($buffer);
 }
 
 package Parse::Kalex::Lexer;

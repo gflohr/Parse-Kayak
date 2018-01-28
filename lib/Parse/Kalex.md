@@ -159,7 +159,7 @@ You can reference the variable in a rule like this:
 
 ```lex
 DIGIT [0-9]
-CHAR [a-z][A-Z]
+CHAR [a-zA-Z]
 %%
 ${CHAR}${DIGIT}       print "coordinate $^N\n";
 .|\n
