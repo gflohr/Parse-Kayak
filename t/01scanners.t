@@ -23,10 +23,11 @@ if ($^O ne 'VMS') {
 sub test_scanner;
 sub compare_files;
 
-foreach my $scanner (qw(
-    echo
-    wc
-)) {
+my $scannerdir = File::Spec->catfile('t', 'scanners');
+opendir my $dh, $scannerdir or die "$scannerdir: $!\n";
+my @scanners = map { s/\.l$//; $_ } grep { /\.l$/ } readdir $dh;
+
+foreach my $scanner (@scanners) {
     test_scanner $scanner;
 }
 

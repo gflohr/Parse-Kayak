@@ -95,8 +95,6 @@ The following example is taken from the flex manual:
 
 ```lex
     my ($num_lines, $num_chars) = (0, 0);
-
-%option noyywrap
 %%
 \n      ++$num_lines; ++$num_chars;
 .       ++$num_chars;
@@ -163,7 +161,7 @@ You can reference the variable in a rule like this:
 DIGIT [0-9]
 CHAR [a-z][A-Z]
 %%
-${DIGIT}${CHAR}       print "coordinate $^N\n";
+${CHAR}${DIGIT}       print "coordinate $^N\n";
 .|\n
 ```
 
