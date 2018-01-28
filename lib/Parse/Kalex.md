@@ -331,6 +331,29 @@ no strict;
 That means that you should put a `use strict;` at the beginning
 of your user code section if you want to enable strictness.
 
+## Comments in the Input
+
+Kalex supports C style comments, that is everything inside `/* ... */` usually
+gets copied verbatim to the output but is converted to a Perl style comment:
+
+```C
+/* Lexical scanner for the XYZ language. */
+```
+
+That C style comment becomes:
+
+```Perl
+# Lexical scanner for the XYZ language.
+```
+
+Kalex should accept comments everywhere flex accepts comments.  If not,
+please report it as a bug.  Notable differences to flex are:
+
+* Comments are allowed after start condition declarations.
+* Comments are allowed after [name definitions](#name-definitions).
+
+These comments are, however, considered comments on the kalex input and are discarded in the output.
+
 # DIFFERENCES TO FLEX
 
 ## No yywrap() By Default
