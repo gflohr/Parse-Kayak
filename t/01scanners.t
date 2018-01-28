@@ -10,14 +10,29 @@
 use strict;
 
 use Test::More;
-
+use File::Spec;
 use Parse::Kalex;
 
-my $k = Parse::Kalex->new('t/scanners/echo.l');
-ok $k, 'echo new';
-ok $k->scan, 'echo scan';
-ok $k->output, 'echo output';
-ok -e 'lex.yy.pl', 'echo -> lex.yy.pl';
-ok unlink 'lex.yy.pl', 'echo unlink lex.yy.pl';
+sub test_scanner;
+
+foreach my $scanner (qw(
+    echo
+)) {
+    test_scanner $scanner;
+}
 
 done_testing;
+
+sub test_scanner {
+    my ($name) = @_;
+
+    my $lfile = File::Spec->catfile('t', 'scanners', $name . '.l');
+    my $scanner = Parse::Kalex->new($lfile);
+    ok $scanner, "$name new";
+    ok $scanner->scan, "$name scan";
+    ok $scanner->output, "$name output";
+    ok -e 'lex.yy.pl', "$name -> lex.yy.pl";
+    ok unlink "lex.yy.pl", "$name unlink lex.yy.pl";
+
+    return 1;
+}
