@@ -217,6 +217,8 @@ on start conditions.
 The same restrictions on possible names apply as for [Name
 Definitions](#name-definitions) above.
 
+You can place comments after start conditions.
+
 ### Indented Text
 
 All indented text in the definitions section is copied verbatim to

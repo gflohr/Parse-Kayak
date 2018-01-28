@@ -27,7 +27,7 @@ my $scannerdir = File::Spec->catfile('t', 'scanners');
 opendir my $dh, $scannerdir or die "$scannerdir: $!\n";
 my @scanners = map { s/\.l$//; $_ } grep { /\.l$/ } readdir $dh;
 
-foreach my $scanner (@scanners) {
+foreach my $scanner (sort @scanners) {
     test_scanner $scanner;
 }
 
