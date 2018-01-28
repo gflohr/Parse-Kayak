@@ -25,6 +25,7 @@ sub compare_files;
 
 foreach my $scanner (qw(
     echo
+    wc
 )) {
     test_scanner $scanner;
 }

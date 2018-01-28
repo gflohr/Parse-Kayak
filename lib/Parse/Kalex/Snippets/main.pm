@@ -34,6 +34,12 @@ sub ECHO {
     $yylexer->ECHO;
 }
 
+sub yyout {
+    my ($buffer) = @_;
+
+    $yylexer->yyout($buffer);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;
