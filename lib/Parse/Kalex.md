@@ -205,12 +205,12 @@ In the definitions section, you can declare an arbitrary number
 of start conditions in one of the following forms:
 
 ```lex
-%sc COND1 COND2
-%xc XCOND1 XCOND2
+%s COND1 COND2
+%x XCOND1 XCOND2
 ```
 
-The form `%sc` declares an *inclusive* start condition, the form
-`%xc` declares an *exclusive* start condition.  See the section
+The form `%s` declares an *inclusive* start condition, the form
+`%x` declares an *exclusive* start condition.  See the section
 [Start Conditions](#start-conditions) below for more information
 on start conditions.
 

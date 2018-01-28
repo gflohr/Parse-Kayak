@@ -30,6 +30,24 @@ sub ECHO {
     $yylexer->ECHO;
 }
 
+sub YYBEGIN {
+    my ($condition) = @_;
+
+    $yylexer->YYBEGIN($condition);
+}
+
+sub YYPUSH {
+    my ($condition) = @_;
+
+    $yylexer->YYPUSH($condition);
+}
+
+sub YYPOP {
+    my ($condition) = @_;
+
+    $yylexer->YYPOP($condition);
+}
+
 sub yyprint {
     my ($buffer) = @_;
 

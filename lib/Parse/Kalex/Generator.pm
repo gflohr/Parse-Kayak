@@ -346,6 +346,10 @@ EOF
     }
 
     my $ctypes = $self->__dumpVariable($self->{__condition_types});
+    my $count = 0;
+    my $cnames = $self->__dumpVariable({
+        map { $_ => $count++ } @{$self->{__condition_names}}
+    });
     my $options = $self->__dumpVariable($self->{__options});
     my @names;
     foreach my $name (keys %{$self->{__names}}) {
@@ -356,7 +360,9 @@ EOF
 
     $output .= <<EOF;
     ];
+    # FIXME! yyprefix all of them!
     \$self->{__condition_types} = $ctypes;
+    \$self->{__yycondition_names} = $cnames;
     \$self->{__yyoptions} = $options;
     \$self->{__yyvariables} = { $variables };
 

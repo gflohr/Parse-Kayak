@@ -185,6 +185,8 @@ sub __yynextChar {
 sub __yylexCONDITION_DECLS {
     my ($self) = @_;
 
+    my $ws = $self->__yyconsumeWhitespace;
+
     if ($self->{__yyinput} =~ s/^($WS+)//o) {
         return WS => $1;
     } elsif ($self->{__yyinput} =~ s/^(${IDENT})//o) {
@@ -198,33 +200,12 @@ sub __yylexCONDITION_DECLS {
     } elsif ($self->{__yyinput} =~ s/^\n//o) {
         $self->YYPOP;
         return NEWLINE => "\n";
-    }
-
-    return $self->__yynextChar;
-}
-
-sub __yylexFIRST_CONDITION_DECLS {
-    my ($self) = @_;
-
-    $self->__yyconsumeWhitespace;
-
-    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
-        $self->YYPOP;
-        $self->YYPUSH('CONDITION_DECLS');
-        return IDENT => $1;
-    } elsif ($self->{__yyinput} =~ s/^\*//o) {
-        $self->YYPOP;
-        $self->YYPUSH('CONDITION_DECLS');
-        return '*', '*',
-    } elsif ($self->{__yyinput} =~ s/^,//o) {
-        $self->YYPOP;
-        $self->YYPUSH('CONDITION_DECLS');
-        return ',', ',';
-    } elsif ($self->{__yyinput} =~ s/^>//o) {
-        $self->YYPOP;
-        $self->YYPUSH('CONDITION_DECLS');
-        return '>', '>';
-    } elsif ($self->{__yyinput} =~ s/^\n//o) {
+    } elsif ($self->{__yyinput} =~ s{^/\*}{}o) {
+        $self->{__yyinput} = '/*' . $self->{__yyinput};
+        if ($self->{__yyinput} !~ s{/\*.*?\*/$WS*\n}{}s) {
+            $self->__yyfatalParseError(__("cannot find comment delimiter '*/'"
+                                          . " before end of file"));
+        }
         $self->YYPOP;
         return NEWLINE => "\n";
     }
@@ -454,8 +435,8 @@ sub __yylexINITIAL {
     } elsif ($self->{__yyinput} =~ s/^($IDENT)//) {
         $self->YYPUSH('NAME');
         return NAME => $1;
-    } elsif ($self->{__yyinput} =~ s/^(%[sx])//o) {
-        $self->YYPUSH('FIRST_CONDITION_DECLS');
+    } elsif ($self->{__yyinput} =~ s/^(%[sx])$WS+//o) {
+        $self->YYPUSH('CONDITION_DECLS');
         return SC => $1;
     } elsif ($self->{__yyinput} =~ s{^/\*}{}o) {
         $self->{__yyinput} = '/*' . $self->{__yyinput};
@@ -482,7 +463,7 @@ sub __yylexINITIAL {
             $self->__yyfatalParseError($@);
         }
         return TOP_CODE => $code;
-    } elsif ($self->{__yyinput} =~ s/^\%option$WS*//o) {
+    } elsif ($self->{__yyinput} =~ s/^\%option$WS+//o) {
         $self->YYPUSH('OPTION');
         return OPTION => 'OPTION';
     }

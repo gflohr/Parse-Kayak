@@ -31,6 +31,7 @@ sub new {
     #
     # - __rules
     # - __condition_types
+    # - __condition_names
     $self->__yyinit;
 }
 
@@ -85,6 +86,50 @@ sub ECHO {
     my ($self) = @_;
 
     return $self->yyprint($^N);
+}
+
+sub YYPUSH {
+    my ($self, $state) = @_;
+
+    $self->__yyvalidateStartCondition($state);
+    push @{$self->{__yystate}}, $state;
+
+    return $self;
+}
+
+sub YYPOP {
+    my ($self) = @_;
+
+    pop @{$self->{__yystate}}
+        or die "POP called but start condition stack is empty!\n";
+
+    return $self;
+}
+
+sub YYBEGIN {
+    my ($self, $state) = @_;
+
+    $self->__yyvalidateStartCondition($state);
+    $self->{__yystate} = [$state];
+
+    return $self;
+}
+
+sub __yyvalidateStartCondition {
+    my ($self, $state) = @_;
+
+    if (!defined $state || !length $state) {
+        die "YYPUSH/YYPOP/YYBEGIN called with empty start condition\n";
+    }
+
+    return 0 if 0 == $state;
+    
+    if (!exists $self->{__yycondition_names}->{$state}) {
+        die "YYPUSH/YYPOP/YYBEGIN called with undeclared start"
+            . " condition'$state'.\n";
+    }
+
+    return $self->{__yycondition_names}->{$state};
 }
 
 sub __yywrap {
