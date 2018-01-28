@@ -30,6 +30,10 @@ sub yylex {
     $yylexer->yylex;
 }
 
+sub ECHO {
+    $yylexer->ECHO;
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

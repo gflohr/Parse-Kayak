@@ -56,7 +56,7 @@ sub __yygetlines {
     return $fh->getlines;    
 }
 
-sub __yyprint {
+sub yyout {
     my ($self, $data) = @_;
 
     my $yyout = $self->{yyout};
@@ -64,8 +64,10 @@ sub __yyprint {
         if ('GLOB' eq reftype $yyout || blessed $yyout) {
             return $yyout->print($data);
         } elsif ('SCALAR' eq reftype $yyout) {
-            $yyout .= $data;
-            return 1;
+            open my $fh, '>', $yyout;
+            $yyout = $fh;
+            $self->{yyoutname} = '<scalar>';
+            $yyout->print($data);
         }
     }
 
@@ -76,7 +78,13 @@ sub __yyprint {
     $self->{yyout} = $fh;
     $self->{yyoutname} = $yyout;
 
-    return $fh->print($data);    
+    return $fh->print($data);
+}
+
+sub ECHO {
+    my ($self) = @_;
+
+    return $self->yyout($^N);
 }
 
 sub __yywrap {
@@ -113,7 +121,7 @@ sub __yypattern {
 sub __yyinitMatcher {
     my ($self) = @_;
 
-    # This indices into this array are condition numbers, the items
+    # The indices into this array are condition numbers, the items
     # are arrays of active rule numbers;
     my @active;
     for (my $r = 0; $r < @{$self->{__rules}}; ++$r) {
@@ -171,34 +179,15 @@ sub __yycompilePatterns {
         my $rule = $self->{__rules}->[$r];
         my $regex = $rule->[1];
 
-        my $pattern = $self->__yyfixupRegex($rule, $parentheses);
+        my $pattern = '(' . $self->__yyfixupRegex($rule, $parentheses) . ')';
         
-        # There are several ways finding out which pattern matched.  You
-        # can check the return value of the match and check which elemeents
-        # are defined.  When you count all captures, you can find out which
-        # rule caused the match.
-        #
-        # In a similar manner you can use @- and @+ that contain the boundaries
-        # of all matches and submatches.
-        #
-        # The most efficient way is to embed tiny code snippets which give
-        # you all the relevant information.  We store that in the instance
-        # variable __yymatch.
         $pattern .= "(?{\$self->{__yymatch} = [$r, $parentheses, $rule->[2]]})";
-        push @patterns, "($pattern)";
+        push @patterns, $pattern;
 
         $self->{__yypattern_cache}->[$r]->[$parentheses] = $pattern;
 
         $parentheses += $rule->[2];
     }
-
-    # Add the default match.
-    my $default_rule = @{$self->{__rules}};
-    ++$parentheses;
-
-    my $pattern = '((?s:.))'
-            . "(?{\$self->{__yymatch} = [$default_rule, $parentheses, 0]})";
-    push @patterns, $pattern;
 
     my $re = join '|', @patterns;
 

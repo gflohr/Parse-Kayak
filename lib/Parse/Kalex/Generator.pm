@@ -323,10 +323,22 @@ sub __yyinit {
 
     $self->{__rules} = [
 EOF
-    
+
+    my @location = [__FILE__, 2 + __LINE__, 8];
+    my $default_regex = Parse::Kalex::Generator::Regex->new(
+        '.|\n', @location);
+    @location = [__FILE__, 1 + __LINE__, 8];
+    my $default_action = '$self->ECHO;';
+    my $default_rule = [
+        ['-1'],
+        $default_regex,
+        $default_action,
+        @location
+    ];
+    push @{$self->{__rules}}, $default_rule;
     foreach my $rule (@{$self->{__rules}}) {
         # We need the start conditions, the pattern, the number of
-        # parentheses and the list of back references.
+        # parentheses and the list of fixups.
         my $record = [$rule->[0], $rule->[1]->[0], $rule->[1]->[1], 
                       $rule->[1]->[2]];
         my $dump = $self->__dumpVariable($record);
@@ -383,9 +395,9 @@ EOF
         $self->__yywrap and return;
         my $pattern = $self->__yypattern;
 
-        my @matches = $self->{__yyinput} =~ /$pattern/;
+        delete $self->{__yymatch};
+        my @matches = $self->{__yyinput} =~ $pattern;
         my ($ruleno, $capture_offset, $captures) = @{$self->{__yymatch}};
-
         @_ = ($self, splice @matches, $capture_offset, $captures);
 
         my $yytext = $self->{__yytext} = $^N;
@@ -407,12 +419,7 @@ EOF
         ++$ruleno;
     }
 
-    # Default action.
-    my ($filename, $lineno) = (__FILE__, __LINE__);
-
     $output .= <<EOF;
-#line $lineno "$filename"
-YYRULE$ruleno: \$self->__yyprint(\$^N);
     }
 
     return;
