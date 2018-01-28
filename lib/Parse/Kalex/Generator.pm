@@ -411,7 +411,6 @@ EOF
         $self->__yywrap and return;
         my $pattern = $self->__yypattern;
 
-        delete $self->{__yymatch};
         my @matches = $self->{__yyinput} =~ $pattern;
         my ($ruleno, $capture_offset, $captures) = @{$self->{__yymatch}};
         @_ = ($self, splice @matches, $capture_offset, $captures);
@@ -427,9 +426,7 @@ EOF
 
         $output .= <<EOF;
 #line $location->[1] "$location->[0]"
-YYRULE$ruleno: $action
-
-        next;
+YYRULE$ruleno: $action; next;
 
 EOF
         ++$ruleno;

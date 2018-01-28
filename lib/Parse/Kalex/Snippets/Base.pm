@@ -91,8 +91,8 @@ sub ECHO {
 sub YYPUSH {
     my ($self, $state) = @_;
 
-    $self->__yyvalidateStartCondition($state);
-    push @{$self->{__yystate}}, $state;
+    my $nstate = $self->__yyvalidateStartCondition($state);
+    push @{$self->{__yystate}}, $nstate;
 
     return $self;
 }
@@ -109,8 +109,8 @@ sub YYPOP {
 sub YYBEGIN {
     my ($self, $state) = @_;
 
-    $self->__yyvalidateStartCondition($state);
-    $self->{__yystate} = [$state];
+    my $nstate = $self->__yyvalidateStartCondition($state);
+    $self->{__yystate} = [$nstate];
 
     return $self;
 }
@@ -122,7 +122,7 @@ sub __yyvalidateStartCondition {
         die "YYPUSH/YYPOP/YYBEGIN called with empty start condition\n";
     }
 
-    return 0 if 0 == $state;
+    return 0 if '0' eq $state;
     
     if (!exists $self->{__yycondition_names}->{$state}) {
         die "YYPUSH/YYPOP/YYBEGIN called with undeclared start"
@@ -166,6 +166,7 @@ sub __yypattern {
 sub __yyinitMatcher {
     my ($self) = @_;
 
+$DB::single = 1;
     # The indices into this array are condition numbers, the items
     # are arrays of active rule numbers;
     my @active;
@@ -238,8 +239,7 @@ sub __yycompilePatterns {
 
     use re qw(eval);
 
-    # FIXME! Case-insensitive matches?
-    return qr/^$re/o;
+    return qr/^$re/;
 }
 
 sub __yyfixupRegex {
