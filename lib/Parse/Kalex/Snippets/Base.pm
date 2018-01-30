@@ -166,7 +166,6 @@ sub __yypattern {
 sub __yyinitMatcher {
     my ($self) = @_;
 
-$DB::single = 1;
     # The indices into this array are condition numbers, the items
     # are arrays of active rule numbers;
     my @active;
