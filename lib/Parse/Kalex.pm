@@ -344,6 +344,10 @@ sub __yylexRULES {
         $self->YYPOP;
         $self->YYPUSH('USER_CODE');
         return SEPARATOR => '%%';
+    } elsif ($self->{__yyinput} =~ /^~/) {
+        my $regex = $self->__yyReadRuleRegex(\$self->{__yyinput});
+        $self->YYPUSH('ACTION');
+        return PATTERN => $regex;
     } else {
         $self->YYPUSH('ACTION');
         $self->YYPUSH('REGEX');
@@ -864,6 +868,50 @@ sub __yyreadPerl {
     }
 
     # NOT REACHED.
+}
+
+sub __yyReadRuleRegex {
+    my ($self, $yyinput) = @_;
+
+    my @location = $self->yylocation;
+
+    # Make PPI::Tokenizer see a pattern match.
+    substr $$yyinput, 0, 1, 'm';
+    my $tokenizer = PPI::Tokenizer->new($yyinput);
+    my $token = $tokenizer->get_token;
+
+    # Sort the modifiers so that our generated source code will not contain
+    # any unsavory words, unless explicitely desired by the author.
+    my $modifiers = join '', sort keys %{$token->get_modifiers};
+    my $match_string = "(?$modifiers:" . $token->get_match_string . ")";
+
+    $self->{__yytext} = $token->content;
+    substr $self->{__ytext}, 0, 1, '~';
+
+    my $regex = Parse::Kalex::Generator::Regex->new('', @location);
+    
+    while ($match_string =~ /
+            \G(
+            [^\\$(]+                # anything not special
+            |
+            \(\?                    # non-capturing parentheses.
+            |
+            \(                      # capturing parentheses
+            |
+            \\.                     # escaped character
+            |
+            \$[_a-zA-Z]+            # $variable
+            |
+            \$\{[_a-zA-Z]+\}        # ${variable}
+            |
+            .                       # false positive
+            )/gsx) {
+        $regex->grow($1);
+    }
+
+    $$yyinput = substr $$yyinput, $token->length;
+
+    return $regex;
 }
 
 sub __readDefRegex {

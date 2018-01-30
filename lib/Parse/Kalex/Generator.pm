@@ -580,6 +580,7 @@ sub grow {
     my ($self, $chunk) = @_;
 
     my $fixups = $self->fixups;
+
     if ($chunk =~ /^\\([1-9][0-9]*)$/) {
         push @$fixups, [b => length $self->[0], length $chunk, $1];
     } elsif ($chunk =~ /^\$([_a-zA-Z]+)/) {
