@@ -37,6 +37,10 @@ Or from Perl:
       * [Format of the Rules Section](#format-of-the-rules-section)
          * [Rules](#rules)
       * [Format of the User Code Section](#format-of-the-user-code-section)
+      * [Comments in the Input](#comments-in-the-input)
+   * [PATTERNS](#patterns)
+      * [Submatches](#submatches)
+      * [Interpolation](#interpolation)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
       * [No yywrap() By Default](#no-yywrap-by-default)
       * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
@@ -198,7 +202,6 @@ discarded.  They are *not* copied to the generated scanner.  Note
 that they will possibly confuse syntax highlighters because comments
 are not allowed after name definitions for flex and lex.
 
-
 ### Start Condition Definitions
 
 In the definitions section, you can declare an arbitrary number
@@ -354,6 +357,77 @@ please report it as a bug.  Notable differences to flex are:
 
 These comments are, however, considered comments on the kalex input and are discarded in the output.
 
+# PATTERNS
+
+The patterns used in the [rules section](#format-of-the-rules-section) are
+just regular expressions.  And since Kalex is written in Perl, it is no
+wonder that they are *Perl* regular expressions.  You can learn everything 
+you want to know about regular expressions with the command `perldoc perlre`
+or online at https://perldoc.perl.org/perlre.html.
+
+There are two notable differences to Perl that are both owed to the fact that
+the Kalex input is not a Perl program but a description that produces a Perl
+program.
+
+## Submatches
+
+The variables `$1, $2, $3, ... $n` that hold captured submatches should not
+be used.  They are present but will most probably not contain what you
+expect.  The same applies to the magical arrays `@-` and `@+`.
+
+Instead of `$1, $2, $3, ... $n` you can use `$_[1], $_[2], $_[3], ... $_[n]`
+in actions.
+
+You can, however, use back references without problems, for example:
+
+```lex
+("|').*?\1
+```
+
+Even if `$1` will not hold a single or double quote in the above example,
+you can refer to it with `\1'.  Actually, the real regular expression is
+modified a little bit before being passed to Perl, and the back references
+are automatically fixed up to point to the correct submatch.
+
+## Interpolation
+
+In Perl programs, regular expressions are subject to variable interpolation.
+For most practical purposes, you can achieve the same effect with [name
+definitions](#name-definitions).  You can still interpolate other variables
+or even code with `@{[...]}`  but the behavior will most probably look
+arbitrary to you.
+
+It is not really arbitrary.  In fact, variable interpolations and code
+will be evaluated in the context of a method in the package 
+`Parse::Kalex::Lexer` or whatever other package you have specified on the
+command-line with the option `--lexer` but you should not rely on that
+because this implementation detail may change in the future.
+
+Specifically, keep in mind that the following does *not* work:
+
+```
+%%
+    my $digit = '[0-9]';
+$digit+\.$digit+            return FLOAT, $yytext;
+%%
+```
+
+The variable `$digit` is lexically scoped to the routine `yylex()` but the
+regular expression is compiled in another scope where there is no
+variable `$digit`.
+
+On the other hand, this will work as expected:
+
+DIGIT [0-9]
+```
+%%
+$DIGIT+\.$DIGIT+            return FLOAT, $yytext;
+%%
+```
+# HOW THE INPUT IS MATCHED
+
+
+
 # DIFFERENCES TO FLEX
 
 ## No yywrap() By Default
@@ -368,6 +442,34 @@ attempt to invoke yywrawp() unless you explicitely specify it with
 
 That avoids the necessity to add `%option noyywrap` to your input
 files for the normal use case.
+
+## The Best Match Is Not Necessarily the Longest
+
+The best match (the one that is selected) in is always the longest match.
+If there is more than one rule that produces a match of that length, the
+one that comes first in the input file is used.
+
+In Kalex, the first rule that produces a match is selected.  The length
+of the match does not matter.
+
+Take the following lexer definition as an example.
+
+```lex
+%%
+a                          /* discard */
+a+                         ECHO;
+.|\n                       /* discard */
+%%%
+```
+
+If you feed the string "aaah" into a flex lexer with that definition, it will
+print "aaa", a Kalex lexer will remain silent.
+
+The Kalex lexer will pick the first rule three times because it comes first.
+The second rule is effectively useless.
+
+A flex lexer will pick the second rule once, because it produces the longer
+match.
 
 ## Name Definitions Define Perl Variables
 
