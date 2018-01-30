@@ -347,7 +347,7 @@ sub __yylexRULES {
     } elsif ($self->{__yyinput} =~ /^~/) {
         my $regex = $self->__yyReadRuleRegex(\$self->{__yyinput});
         $self->YYPUSH('ACTION');
-        return PATTERN => $regex;
+        return MREGEX => $regex;
     } else {
         $self->YYPUSH('ACTION');
         $self->YYPUSH('REGEX');

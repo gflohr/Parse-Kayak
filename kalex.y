@@ -101,9 +101,13 @@ rule: '<' conditions_comma '>' regex ACTION
     | RULES_CODE
     ;
 
-regex: PATTERN            { $_[0]->YYData->{generator}->addRegex($_[1]) }
-     | regex PATTERN      { $_[0]->YYData->{generator}->growRegex($_[1], $_[2])}
+regex: patterns  { $_[1] }
+     | MREGEX    { $_[1] }
      ;
+     
+patterns: PATTERN            { $_[0]->YYData->{generator}->addRegex($_[1]) }
+        | patterns PATTERN      { $_[0]->YYData->{generator}->growRegex($_[1], $_[2])}
+        ;
 
 conditions_comma: IDENT
                     {

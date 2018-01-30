@@ -424,6 +424,32 @@ DIGIT [0-9]
 $DIGIT+\.$DIGIT+            return FLOAT, $yytext;
 %%
 ```
+
+## Multi-Line Patterns
+
+If the pattern begins with a tilde `~` the following input is treated as a
+multi-line pattern.  Example:
+
+%%
+~{
+    [1-9][0-9]+       # the part before the decimal point
+    \(?:    
+    \.                # the decimal point
+    [0-9]+            # the fractional part.
+    )?                # the fractional part is optional.
+}gsx                  ECHO
+
+The tilde has the same effect as if Perl had seen the matching operator
+`m` in Perl code.
+The first character after the tilde `~` is the delimiter, in this case an
+opening curly brace.  All nesting delimiters - that are curly braces, 
+square brackets, angle bracktes, and parentheses - can be nested.
+
+After the trailing delimiter, you can add all modifiers that Perl support.
+
+See `perldoc perlre` for more information.  Just imagine that instead of 
+`~PATTERN` you would have written `$variable =~ mPATTERN`.
+
 # HOW THE INPUT IS MATCHED
 
 
