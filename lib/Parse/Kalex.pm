@@ -366,12 +366,22 @@ sub __yylexCONDITIONS {
 sub __yylexRULES {
     my ($self) = @_;
 
+    my $ws = $self->__yyconsumeWhitespace;
+    if (length $ws) {
+        if ($self->{__yyinput} =~ s{^(/\*.*?\*/)$WS*\n}{}s) {
+            return RULES_CODE => $self->__convertComment($1);
+        } elsif ($self->{__yyinput} =~ s/^(.+)\n//) {
+            return RULES_CODE => $1;
+        }
+    }
+
     if ($self->{__yyinput} =~ s/^<//o) {
         $self->YYPUSH('CONDITIONS');
         return '<', '<';
     } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYBEGIN('USER_CODE');
         return SEPARATOR => '%%';
+    } elsif (my $ws = $self->__yyconsumeWhitespace) {
     }
 
     $self->YYPUSH('RULES_REGEX');
