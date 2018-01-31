@@ -80,26 +80,30 @@ rules: rule rules
      ;
 
 /* ACTION can be empty.  The lexer takes care of that.  */
-rule: '<' conditions_comma '>' regex ACTION
+rule: '<' conditions_comma '>' regex rule_comments ACTION rule_comments
         {
             $_[0]->YYData->{generator}->addRule(
-                $_[2], $_[4], $_[5], $_[0]->YYData->{lexer}->yylocation
+                $_[2], $_[4], $_[6], $_[0]->YYData->{lexer}->yylocation
             );
         }
-    | '<' '*' '>' regex ACTION
+    | '<' '*' '>' regex rule_comments ACTION rule_comments
         {
             $_[0]->YYData->{generator}->addRule(
-                  [$_[2]], $_[4], $_[5], $_[0]->YYData->{lexer}->yylocation
+                  [$_[2]], $_[4], $_[6], $_[0]->YYData->{lexer}->yylocation
             );
         }
-    | regex ACTION
+    | regex rule_comments ACTION rule_comments
         {
             $_[0]->YYData->{generator}->addRule(
-                  [], $_[1], $_[2], $_[0]->YYData->{lexer}->yylocation
+                  [], $_[1], $_[3], $_[0]->YYData->{lexer}->yylocation
             );
         }
     | RULES_CODE
     ;
+
+rule_comments: COMMENT rule_comments
+             | /* empty */
+             ;
 
 regex: patterns  { $_[1] }
      | MREGEX    { $_[1] }

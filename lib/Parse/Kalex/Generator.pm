@@ -23,6 +23,7 @@ sub new {
         __errors => 0,
         __top_code => [],
         __def_code => [],
+        __rules_code => [],
         __lexer => $lexer,
         __filename => '',
         __start_conditions => {
@@ -137,6 +138,19 @@ sub addDefCode {
     push @{$self->{__def_code}}, [ $code, @location ];
 
     return $self;
+}
+
+sub addRulesCode {
+    my ($self, $code, $after_action) = @_;
+
+    my $ruleno = @{$self->{__rules}};
+    ++$ruleno if $after_action;
+    $self->{__rules_code} ||= [];
+
+    push @{$self->{__rules_code}->[$ruleno]}, 
+        [ $code, $self->{lexer}->yylocation];
+
+    return $self; 
 }
 
 sub setUserCode {

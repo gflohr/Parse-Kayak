@@ -213,57 +213,53 @@ sub __yylexCONDITION_DECLS {
     return $self->__yynextChar;
 }
 
-sub __yylexCONDITIONS {
+sub __yylexPOST_ACTION {
     my ($self) = @_;
 
     $self->__yyconsumeWhitespace;
 
-    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
-        return IDENT => $1;
-    } elsif ($self->{__yyinput} =~ s/^\*//o) {
-        return '*', '*',
-    } elsif ($self->{__yyinput} =~ s/^,//o) {
-        return ',', ',';
-    } elsif ($self->{__yyinput} =~ s/^>//o) {
-        $self->YYPOP;
-        return '>', '>';
+    if ($self->{__yyinput} =~ s/^\n//) {
+        # No action.
+        $self->YYBEGIN('RULES');
+        return $self->__yylexRULES;
+    } elsif ($self->{__yyinput} =~ s{^(/\*.*?\*/)}{}s) {
+        return COMMENT => $self->__convertComment($1);
     }
 
-    return $self->__yynextChar;
+    return $self->__yynextChar;        
 }
-
+# We have read the rules regex and and are now expecting the action.
+# C-style comments are allowed here.
 sub __yylexACTION {
     my ($self) = @_;
 
     $self->__yyconsumeWhitespace;
 
-    if ($self->{__yyinput} =~ s/^\n//o) {
+    if ($self->{__yyinput} =~ s/^\n//) {
         # No action.
-        $self->YYPOP();
+        $self->YYBEGIN('RULES');
         return ACTION => '';
-    } elsif ($self->{__yyinput} =~ /^\{/o) {
+    } elsif ($self->{__yyinput} =~ /^\{/) {
         # { ... }
         my $code = eval { $self->__yyreadPerl(\$self->{__yyinput}) };
         if ($@) {
             $self->__yyfatalParseError($@);
         }
-        $self->YYPOP();
-        # FIXME! This will confuse the current location counter!
-        $self->__yyconsumeWhitespace(1);
+        $self->YYBEGIN('POST_ACTION');
         return ACTION => $code;
-    } elsif ($self->{__yyinput} =~ /^\%\{/o) {
+    } elsif ($self->{__yyinput} =~ /^\%\{/) {
         # %{ ... %}
         my $code = $self->__yyreadPerl(\$self->{__yyinput});
         if ($@) {
             $self->__yyfatalParseError($@);
         }
-        $self->YYPOP();
-        # FIXME! This will confuse the current location counter!
-        $self->__yyconsumeWhitespace(1);
+        $self->YYBEGIN('POST_ACTION');
         return ACTION => $code;
-    } elsif ($self->{__yyinput} =~ s/(.+)\n//o) {
+    } elsif ($self->{__yyinput} =~ s{^(/\*.*?\*/)}{}s) {
+        return COMMENT => $self->__convertComment($1);
+    } elsif ($self->{__yyinput} =~ s/(.+)\n//) {
         # One-liner.
-        $self->YYPOP();
+        $self->YYBEGIN('RULES');
         return ACTION => $1;
     }
 
@@ -318,8 +314,7 @@ sub __yylexREGEX {
         return PATTERN => $1;
     } elsif ($self->{__yyinput} =~ s/^\n//o) {
         # No action.
-        $self->YYPOP();
-        $self->YYPOP();
+        $self->YYBEGIN('RULES');
         return ACTION => '';
     } elsif ($self->{__yyinput} =~ s/^(.)//o) {
         return PATTERN => $1;
@@ -329,38 +324,64 @@ sub __yylexREGEX {
     return YYEOF;
 }
 
-sub __yylexRULES {
+# We are either at column 0 of a rule or right after the closing '>' of
+# a list of start conditions.
+sub __yylexRULES_REGEX {
     my ($self) = @_;
 
-    my ($whitespace) = $self->__yyconsumeWhitespace(1);
-    if (defined $whitespace) {
-        # FIXME! This is code!
-    }
-
-    if ($self->{__yyinput} =~ s/^<//o) {
-        $self->YYPUSH('CONDITIONS');
-        return '<', '<';
-    } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
-        $self->YYPOP;
-        $self->YYPUSH('USER_CODE');
-        return SEPARATOR => '%%';
-    } elsif ($self->{__yyinput} =~ /^~/) {
+    if ($self->{__yyinput} =~ /^~/) {
         my $regex = $self->__yyReadRuleRegex(\$self->{__yyinput});
         $self->YYPUSH('ACTION');
         return MREGEX => $regex;
-    } else {
-        $self->YYPUSH('ACTION');
-        $self->YYPUSH('REGEX');
-        return $self->__yylexREGEX;
+    }
+    
+    # So that we fall back to ACTION after the next YYPOP.
+    $self->YYPUSH('ACTION');
+    $self->YYPUSH('REGEX');
+    return $self->__yylexREGEX;
+}
+
+# We are reading start conditions at the begining of a rule.
+sub __yylexCONDITIONS {
+    my ($self) = @_;
+
+    $self->__yyconsumeWhitespace;
+
+    if ($self->{__yyinput} =~ s/^(${IDENT})//o) {
+        return IDENT => $1;
+    } elsif ($self->{__yyinput} =~ s/^\*//o) {
+        return '*', '*',
+    } elsif ($self->{__yyinput} =~ s/^,//o) {
+        return ',', ',';
+    } elsif ($self->{__yyinput} =~ s/^>//o) {
+        $self->YYPOP;
+        $self->YYPUSH('RULES_REGEX');
+        return '>', '>';
     }
 
     return $self->__yynextChar;
 }
 
+# We are in the rules section at column 0.
+sub __yylexRULES {
+    my ($self) = @_;
+
+    if ($self->{__yyinput} =~ s/^<//o) {
+        $self->YYPUSH('CONDITIONS');
+        return '<', '<';
+    } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
+        $self->YYBEGIN('USER_CODE');
+        return SEPARATOR => '%%';
+    }
+
+    $self->YYPUSH('RULES_REGEX');
+    return $self->__yylexRULES_REGEX;
+}
+
 sub __yylexUSER_CODE {
     my ($self) = @_;
 
-    $self->YYPOP();
+    $self->YYBEGIN('INITIAL');
         
     my $code = $self->{__yyinput};
     $self->{__yyinput} = '';
@@ -434,7 +455,7 @@ sub __yylexINITIAL {
     my ($self) = @_;
 
     if ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
-        $self->YYPUSH('RULES');
+        $self->YYBEGIN('RULES');
         return SEPARATOR => '%%';
     } elsif ($self->{__yyinput} =~ s/^($IDENT)//) {
         $self->YYPUSH('NAME');
