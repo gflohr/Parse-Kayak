@@ -41,8 +41,13 @@ Or from Perl:
    * [PATTERNS](#patterns)
       * [Submatches](#submatches)
       * [Interpolation](#interpolation)
+      * [Multi-Line Patterns](#multi-line-patterns)
+   * [HOW THE INPUT IS MATCHED](#how-the-input-is-matched)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
       * [No yywrap() By Default](#no-yywrap-by-default)
+      * [BEGIN is YYBEGIN](#begin-is-yybegin)
+      * [YYPUSH and YYPOP](#yypush-and-yypop)
+      * [The Best Match Is Not Necessarily the Longest](#the-best-match-is-not-necessarily-the-longest)
       * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
    * [COPYRIGHT](#copyright)
    * [SEE ALSO](#see-also)
@@ -257,8 +262,13 @@ Multiple `%top` sections are allowed.  Their order is preserved.
 
 ### Comments
 
-Everything enclosed in `/* ... */` is treated as a comment and copied
-to the output.  The comment is converted to a Perl comment though.
+C-style comments (`/* ... */`) must start in the first column of a line.
+There are converted to a Perl comment and copied to the output.
+
+C-style comments that do *not* start in the first column are treated as
+[indented text](#indented-text) and are copied verbatim to the output,
+where they will almost inevitably cause a syntax error.  Use Perl
+style comments in indented text!
 
 ### %Option Directives
 
@@ -453,6 +463,55 @@ See `perldoc perlre` for more information.  Just imagine that instead of
 # HOW THE INPUT IS MATCHED
 
 
+# FREQUENTLY ASKED QUESTIONS
+
+## Quantifier Follows Nothing In Regex
+
+The exact error message is mostly something like:
+
+```
+Quantifier follows nothing in regex; marked by <-- HERE in m/* <-- HERE ...
+```
+
+Most probably you have used a C style comment inside Perl code, for
+example:
+
+```lex
+[^ \t]+                   yyprint " "; /* collapse whitespace */
+```
+
+That looks correct but Kalex has no (reliable) way of finding out that the
+Perl code ends after the semi-colon.  If you want to place a comment after
+an action, you have several choices:
+
+```lex
+[^ \t]+                   { yyprint " "; } /* collapse whitespace */
+[^ \t]+                   %{ yyprint " "; %} /* collapse whitespace */
+[^ \t]+                   yyprint " "; # collapse whitespace
+```
+All of them work.  In brief: Either enclose the Perl code in balanced
+braces, or use a Perl comment.
+
+## Unknown regexp modifier "/P" at
+
+It is usually *reported* before [Quantifier Follows Nothing in
+Regex](#quantifier-follows-nothing-in-regex) but actually appears
+after it.  And it has the same reason.  You are using C-style comments
+after one-line actions, see [above](#quantifier-follows-nothing-in-regex).
+
+If you look into the generated source file, you understand the error
+message.  It may look like this:
+
+```perl
+#line 6 "test.l"
+YYRULE0: ECHO    /* some illegal comment; next;
+
+#line 345 "lib/Path/To/Scanner.pm"
+YYRULE3: $self->ECHO;; next;
+```
+
+The misplaced comment is misinterpreted as a pattern match, and that match
+often ends at path references in the source file.
 
 # DIFFERENCES TO FLEX
 
@@ -468,6 +527,18 @@ attempt to invoke yywrawp() unless you explicitely specify it with
 
 That avoids the necessity to add `%option noyywrap` to your input
 files for the normal use case.
+
+## BEGIN is YYBEGIN
+
+Because `BEGIN` is a compile phase keyword in Perl, it is called `YYBEGIN`
+resp. `$self->YYBEGIN()` in kalex.
+
+## YYPUSH and YYPOP
+
+Start conditions in kalex can be stacked.
+
+This feature can sometimes provide elegant solutions.  Most of the time it
+is a recipe for trouble because it is very easy to get lost.
 
 ## The Best Match Is Not Necessarily the Longest
 
