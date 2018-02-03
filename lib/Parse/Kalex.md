@@ -43,6 +43,15 @@ Or from Perl:
       * [Interpolation](#interpolation)
       * [Multi-Line Patterns](#multi-line-patterns)
    * [HOW THE INPUT IS MATCHED](#how-the-input-is-matched)
+      * [How It Really Works](#how-it-really-works)
+         * [Captures](#captures)
+         * [Backreferences](#backreferences)
+      * [Performance Considerations](#performance-considerations)
+      * [Alternations](#alternations)
+   * [ACTIONS](#actions)
+   * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
+      * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
+      * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
       * [No yywrap() By Default](#no-yywrap-by-default)
       * [BEGIN is YYBEGIN](#begin-is-yybegin)
@@ -466,16 +475,54 @@ See `perldoc perlre` for more information.  Just imagine that instead of
 
 The generated scanner matches its input against the patterns provided in
 the rules section, stopping at the first match.  It strips the matched
-string off of the beginning of the input and then executes the
-action code for that rule, and starts over again.  You can avoid starting
-over by using `return` in the action code.
+string off of the beginning of the input.  This is an important difference
+to flex:
 
-All patterns are automatically anchored to the beginning of the string
-(`^`).
+While flex really scans the input, proceding match by match, kalex throws
+away the parts of the input that have matched.  The input string 
+constantly shrinks in kalex (unless you call `yyunput()`).  A scanner
+that just consists of the default rule and default action corresponds
+to the following Perl code:
+
+```perl
+sub yylex {
+    while (length $input) {
+        $input =~ s/^(.|\n)//;
+        yyprint $1;
+    }
+}
+```
+
+All patterns are automatically anchored to the beginning of the 
+(current!) string (`^`).
 
 If a rule matches but the match is empty, you will create  an endless 
 loop unless you change the start condition in the action code or return.
 Currently, there is no warning about empty matches.
+
+The matched text is availabe in the variable `$yytext` or in the variable
+`$^N`.  The difference is that `$^N` will only contain the matched text
+for the current rule while `$yytext` may contain prefixed text resulting
+froma a preceding invocation of [`yymore()`](#yymore).
+
+Then the [action](#actions) for the matching rule is executed.  Remember
+that there is always a default rule appended to the user supplied rules:
+
+```lex
+.|\n    ECHO
+```
+
+Because of that, the smallest valid scanner description looks like this:
+
+```lex
+%%
+```
+
+The [definitions](#format-of-the-definitions-section) and [rules 
+section](#format-of-the-definitions-section) are empty, and the [user 
+code section](#format-of-the-user-code-section) is missing in this case.
+The generated scanner will therefore copy its entire input to the
+output.
 
 ## How It Really Works
 
@@ -590,6 +637,14 @@ Not that the first form is a real challenge for an average Perl hacker but
 the second one is simply clearer.  The action `|` for the first rule 
 means "same as the following".
 
+# ACTIONS
+
+Each rule can have an *action* which is arbitrary Perl code immediately
+following the [pattern](#patterns).  Remember that whitespace outside
+of character classes (`[...]`) in patterns has to be properly escaped.
+
+
+
 # FREQUENTLY ASKED QUESTIONS
 
 ## Quantifier Follows Nothing In Regex
@@ -666,6 +721,24 @@ Start conditions in kalex can be stacked.
 
 This feature can sometimes provide elegant solutions.  Most of the time it
 is a recipe for trouble because it is very easy to get lost.
+
+## A Dollar-Sign Meand End-Of-Input, Not End-Of-Line
+
+A dollar sign in flex always stands for the end of the line.  In Kalex
+it stands for the end of input, more precisely, for the end of *one*
+input stream if you use `[yymore()](#yymore)` for subsequently parsing
+multiple input streams.
+
+The exact equivalent of the dollar sign in flex is `\Z`.
+
+## A Caret Does Not Make Sense
+
+A caret (`^`) in flex matches the beginning of a line.  That is either
+right after a newline or at the beginning of input.
+
+A rough equivalent for kalex would be `\A` which matches the beginning
+of the string.  But since matched text in kalex is always stripped off,
+it does not make sense.
 
 ## The Best Match Is Not Necessarily the Longest
 
