@@ -438,9 +438,15 @@ EOF
     foreach my $rule (@{$self->{__rules}}) {
         my (undef, undef, $action, $location) = @$rule;
 
+        if ($action =~ /^[ \011\013-\015]*\|[ \011\013-\015]*$/) {
+            $action = '';  # Fall through to next rule.
+        } else {
+            $action .= "; next;";
+        }
+
         $output .= <<EOF;
 #line $location->[1] "$location->[0]"
-YYRULE$ruleno: $action; next;
+YYRULE$ruleno: $action
 
 EOF
         ++$ruleno;
