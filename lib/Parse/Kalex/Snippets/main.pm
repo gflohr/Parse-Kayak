@@ -25,6 +25,8 @@ tie my $yyout, 'Parse::Kalex::Snippets::main::Tier',
     $yylexer, 'yyout';
 tie my $yyoutname, 'Parse::Kalex::Snippets::main::Tier',
     $yylexer, 'yyoutname';
+tie my $yyinput, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yyinput';
 
 sub ECHO {
     $yylexer->ECHO;

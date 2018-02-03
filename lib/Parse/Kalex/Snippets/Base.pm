@@ -135,19 +135,19 @@ sub __yyvalidateStartCondition {
 sub __yywrap {
     my ($self) = @_;
 
-    if (!exists $self->{__yyinput}) {
+    if (!exists $self->{yyinput}) {
         # First round.
-        $self->{__yyinput} = join '', $self->__yygetlines;
+        $self->{yyinput} = join '', $self->__yygetlines;
     }
 
-    while (!length $self->{__yyinput}) {
+    while (!length $self->{yyinput}) {
         if ($self->{__yyoptions}->{yywrap}) {
             return $self if $self->yywrap;
         } else {
             return $self;
         }
 
-        $self->{__yyinput} = join '', $self->__yygetlines;
+        $self->{yyinput} = join '', $self->__yygetlines;
     }
 
     return;
