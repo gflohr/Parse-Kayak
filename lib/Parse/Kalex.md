@@ -424,7 +424,7 @@ $digit+\.$digit+            return FLOAT, $yytext;
 
 The variable `$digit` is lexically scoped to the routine `yylex()` but the
 regular expression is compiled in another scope where there is no
-variable `$digit`.
+variable `$digit` defined.
 
 On the other hand, this will work as expected:
 
@@ -440,6 +440,7 @@ $DIGIT+\.$DIGIT+            return FLOAT, $yytext;
 If the pattern begins with a tilde `~` the following input is treated as a
 multi-line pattern.  Example:
 
+```lex
 %%
 ~{
     [1-9][0-9]+       # the part before the decimal point
@@ -448,6 +449,7 @@ multi-line pattern.  Example:
     [0-9]+            # the fractional part.
     )?                # the fractional part is optional.
 }gsx                  ECHO
+```
 
 The tilde has the same effect as if Perl had seen the matching operator
 `m` in Perl code.
@@ -462,6 +464,131 @@ See `perldoc perlre` for more information.  Just imagine that instead of
 
 # HOW THE INPUT IS MATCHED
 
+The generated scanner matches its input against the patterns provided in
+the rules section, stopping at the first match.  It strips the matched
+string off of the beginning of the input and then executes the
+action code for that rule, and starts over again.  You can avoid starting
+over by using `return` in the action code.
+
+All patterns are automatically anchored to the beginning of the string
+(`^`).
+
+If a rule matches but the match is empty, you will create  an endless 
+loop unless you change the start condition in the action code or return.
+Currently, there is no warning about empty matches.
+
+## How It Really Works
+
+The above description comes close to the actual behavior but is actually
+not true.  Take the following scanner definition as an example:
+
+```lex
+%%
+[ a-zA-Z]+                     ECHO;
+.|\n                              /* discard */
+```
+
+Kalex will translate that into a regular expression which will roughly look
+like this in Perl:
+
+```perl
+qr{^([^a-zA-Z0-9 ])(?:{$r = 0})|(.|\n)(?:{$r = 1})|(.|\n)(?:{$r = 2})}
+```
+
+It creates a long regular expression with alternations, where each 
+alternation corresponds to a rule.  After each alternation, it inserts
+a little code snippet that is needed for finding out which rule had
+matched.  The code is actually not `$r = N` but rather reads 
+`$self->{__yymatch} = [ ... ]` where the elipsis stands for data that
+helps doing the rest of the job faster.
+
+If you are using [start conditions](#start-conditions), then such a
+regular expression is generated for each of them.  They differ in the
+combination of active rules for each start condition.
+
+The above should also make clear why anchoring a rule to the start of
+string is not needed.  It is already done.  This is also true if you
+use the the `/m` modifier that changes the meaning of `^` to "beginning
+of line" instead of "begining of input".  Since the submatch is already
+anchored to the beginning of the input, it can only match if the 
+beginning of the line is also the beginning of the input.
+
+### Captures
+
+You are allowed to capture submatches with parentheses.  Kalex keeps
+track of them so that it can provide you the submatches in the variables
+`$_[1]`, `$_[2]`, ..., no matter at which position in the input file
+the rule appears.
+
+Caveat: The relatively new `/n` modifier which prevents the grouping
+metacharacters `()` from matching is currently ignored.  Do not use it!
+
+### Backreferences
+
+Likewise, backreferences (`\1, \2, ... \n`) are also modified in the
+regular expression before it is being compiled to point at the correct
+submatch.
+
+## Performance Considerations
+
+Optimizing your scanner usually boils down to two simple rules:
+
+1) Rules that often match should preferably appear early in the input.
+2) Longer matching regexes are faster than regexes with short matches.
+
+Rule 1 is often hard to follow and can introduce bugs if you are not 
+careful enough.
+
+Example for rule 2: You want to create a scanner that strips off all
+HTML markups.  Yes, it should also handle HTML comments ...
+
+Bad:
+
+```lex
+%s MARKUP
+%%
+<               YYBEGIN('MARKUP')
+>               YYBEGIN('INITIAL')
+<MARKUP>.|\n    /* discard */
+.|\n            ECHO;
+```
+
+The last rule is actually not needed because it's equivalent to the default
+rule.  
+
+Good:
+
+```lex
+%%
+\<.*?>         /* discard */
+[^<]+          ECHO;
+```
+
+That does exactly the same as before but it matches the larget possible
+chunks of data.  That means it does less matches, and the action code
+gets executed less often.  The "bad" example above instead matches 
+one character at a time.
+
+## Alternations
+
+Keep in mind that every rule in the input becomes an alternation in the
+generated regular expressions:
+
+```lex
+%%
+([-a-zA-Z]+)|([0-9]+)                yyprint(">>>$yytext<<<");
+```
+
+An equivalent but probably more readable description would look like this:
+
+```lex
+%%
+[-a-zA-Z]+                           |
+[0-9]+                               yyprint(">>>$yytext<<<");
+```
+Not that the first form is a real challenge for an average Perl hacker but
+the second one is simply clearer.  The action `|` for the first rule 
+means "same as the following".
 
 # FREQUENTLY ASKED QUESTIONS
 
