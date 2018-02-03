@@ -423,15 +423,15 @@ EOF
     while (1) {
         # Difference to flex! We return false, not 0 on EOF.
         $self->__yywrap and return;
-        my $pattern = $self->__yypattern;
+        my $__yypattern = $self->__yypattern;
 
-        my @matches = $self->{__yyinput} =~ $pattern;
-        my ($ruleno, $capture_offset, $captures) = @{$self->{__yymatch}};
-        @_ = ($self, splice @matches, $capture_offset, $captures);
+        my @yymatches = $self->{__yyinput} =~ $__yypattern;
+        my ($yyruleno, $__yycapture_offset, $__yycaptures) = @{$self->{__yymatch}};
+        @_ = ($self, splice @yymatches, $__yycapture_offset, $__yycaptures);
 
         my $yytext = $self->{__yytext} = $^N;
         substr $self->{__yyinput}, 0, length $^N, '';
-        goto "YYRULE$ruleno";
+        goto "YYRULE$yyruleno";
 EOF
 
     my $ruleno = 0;
