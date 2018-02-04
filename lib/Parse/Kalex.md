@@ -626,6 +626,7 @@ An equivalent but probably more readable description would look like this:
 [-a-zA-Z]+                           |
 [0-9]+                               yyprint(">>>$yytext<<<");
 ```
+
 Not that the first form is a real challenge for an average Perl hacker but
 the second one is simply clearer.  The action `|` for the first rule 
 means "same as the following".
@@ -636,7 +637,55 @@ Each rule can have an *action* which is arbitrary Perl code immediately
 following the [pattern](#patterns).  Remember that whitespace outside
 of character classes (`[...]`) in patterns has to be properly escaped.
 
+If the action is empty, the matched text will be discarded.  The following
+example will delete all occurences of the word bug from the input:
 
+```lex
+%%
+bugs?
+```
+
+All other input is passed through because of the default rule.
+
+The following example from the flex manual compresses multiple spaces and
+tabs into a single space character, and throws away whitespace found at 
+the end of a line:
+
+```lex
+%%
+[ \t]+$       /* ignore this token */
+[ \t]+        print ' ';
+```
+
+If the action code spans multiple lines, you have to enclose it in
+curly braces `{ ... }`.  The form `%{ ... %}` is also allowed:
+
+```lex
+%%
+[-+]?[0-9]+.[0-9]+  {
+                        print "float: $yytext\n";
+                    }
+[-+]?[0-9] /* alternative: */ %{
+                                  print "integer: $yytext\n";
+                              %} /* end of action */
+.|\n                # Throw away everything else.
+```
+
+Note how you can put C-Style comments before and after actions.
+Perl style comments are treated as code and are copied verbatim
+to the scanner.
+
+An action consisting solely of a pipe symbol means "execute the
+action for the following rule":
+
+```lex
+[-a-zA-Z]+        /* fall through */ |
+[0-9]+\.[0-9]+    /* fall through */ |
+[0-9]+                               yyprint(">>>$yytext<<<");
+```
+
+Not that you cannot put comments after the pipe symbol because it cannot
+be distinguished from legitimate Perl code.
 
 # FREQUENTLY ASKED QUESTIONS
 

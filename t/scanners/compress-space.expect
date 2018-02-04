@@ -1,0 +1,5 @@
+The following example from the
+flex manual compresses multiple spaces and
+tabs into a single space character,
+and throws away whitespace found at
+the end of a line.
