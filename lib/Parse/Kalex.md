@@ -41,6 +41,7 @@ Or from Perl:
    * [PATTERNS](#patterns)
       * [Submatches](#submatches)
       * [Interpolation](#interpolation)
+      * [ANCHORS ("^" and "$")](#anchors-and-)
       * [Multi-Line Patterns](#multi-line-patterns)
    * [HOW THE INPUT IS MATCHED](#how-the-input-is-matched)
       * [How It Really Works](#how-it-really-works)
@@ -49,6 +50,11 @@ Or from Perl:
       * [Performance Considerations](#performance-considerations)
       * [Alternations](#alternations)
    * [ACTIONS](#actions)
+      * [ECHO](#echo)
+      * [YYBEGIN](#yybegin)
+      * [YYPUSH](#yypush)
+      * [YYPOP](#yypop)
+      * [REJECT](#reject)
    * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
       * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
       * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
@@ -58,6 +64,8 @@ Or from Perl:
       * [YYPUSH and YYPOP](#yypush-and-yypop)
       * [The Best Match Is Not Necessarily the Longest](#the-best-match-is-not-necessarily-the-longest)
       * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
+      * [REJECT is Less Expensive](#reject-is-less-expensive)
+      * [Code Following REJECT is Allowed](#code-following-reject-is-allowed)
    * [COPYRIGHT](#copyright)
    * [SEE ALSO](#see-also)
 
@@ -657,6 +665,9 @@ the end of a line:
 [ \t]+        print ' ';
 ```
 
+You do not need a trailing semi-colon in the action as it is automatically
+added but it also doesn't hurt.
+
 If the action code spans multiple lines, you have to enclose it in
 curly braces `{ ... }`.  The form `%{ ... %}` is also allowed:
 
@@ -698,13 +709,13 @@ A couple of functions/methods are defined by the scanner:
 
 ## ECHO
 
-Use `$self->ECHO()` in a [reentrant scanner](#reentrant-scanners).
+Use `$_[0]->ECHO()` in a [reentrant scanner](#reentrant-scanners).
 
 `ECHO` copies `$yytext` to the scanner's output.
 
 ## YYBEGIN
 
-Use `$self->YYBEGIN()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYBEGIN()` in a [reentrant scanner](#reentrant-scanner).
 
 This method is the equivalent of `BEGIN` for flex scanners.  It 
 has been renamed to `YYBEGIN` for kalex because `BEGIN` is a reserved
@@ -720,7 +731,7 @@ The start condition `0` is the same as `'INITIAL'`.
 
 ## YYPUSH
 
-Use `$self->YYPUSH()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYPUSH()` in a [reentrant scanner](#reentrant-scanner).
 
 `YYPUSH('FOOBAR')` puts the scanner into the start condition `FOOBAR`
 and pushes `FOOBAR` onto the start condition stack.  You can fall
@@ -731,7 +742,7 @@ start condition name will cause a run-time error.
 
 ## YYPOP
 
-Use `$self->YYPOP()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYPOP()` in a [reentrant scanner](#reentrant-scanner).
 
 `YYPOP` will remove the last pushed start condition from the start
 condition stack and put the scanner back into the condition it was
@@ -739,6 +750,54 @@ before the last call to [`YYPUSH`](#yypush).
 
 Calling `YYPOP()` if the start condition stack has only one element,
 will cause a run-time error.
+
+## REJECT
+
+Use `$_[0]->REJECT()` in a [reentrant scanner](#reentrant-scanner).
+
+`REJECT` pushes back the last matched text onto the input and matches
+again, but skipping the rule that matched last.  So to say, it
+picks the second best rule.
+
+Example from the flex documentation:
+
+```lex
+    my $word_count = 0
+%%
+frob        special(); REJECT;
+[^ \t\n]    ++$word_count;
+```
+
+This scanner calls the function `special()` whenever a word starts with
+"frob".  The call to `REJECT` ensures that it is also counted as a
+word.
+
+Calling `REJECT` more than once in one action is an error and leads to an
+undefined scanner behavior.  However, multiple uses of `REJECT` in
+different rules are allowed, and `REJECT` will then skip the current
+rule for the next match, and all rules rejected immediately before.  See
+this example from the flex documentation:
+
+```lex
+%%
+abcd         |
+abc          |
+ab           |
+a            ECHO; REJECT;
+.|\n         /* eat up any unmatched character */
+%%
+```
+This scanner prints out "abcdabcaba" for all occurences of "abcd" in the
+output.  It first matches "abcd", prints it out, and then repeats the
+matching but this time with rule 1 omitted.  The second best rule is then
+for "abc", and the same happens.  The next best rules are then "ab", and
+"a", until the fifth time only the last rule matches that discards the
+input and implicitely resets the rejected rule set to empty, so that the
+next occurrence of "abcd" will start the procedure over.
+
+Using `REJECT` in flex scanners is somewhat frowned upon because it slows
+down the entire scanner.  Kalex scanners work differently and you suffer
+from only a mostly negligible performance penalty.
 
 # FREQUENTLY ASKED QUESTIONS
 
@@ -791,6 +850,31 @@ The misplaced comment is misinterpreted as a pattern match, and that match
 often ends at path references in the source file.
 
 # DIFFERENCES TO FLEX
+
+## Functions and Variables
+
+The following table gives an overview of various functions and variables
+in flex and kalex.
+
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">kalex</th>
+      <th rowspan="2">flex</th>
+    </tr>
+    <tr>
+      <th>non-reentrant</th>
+      <th>reentrant</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>yylex</code></td>
+      <td><code>yylex</code></td>
+      <td><code>yylex</code></td>
+    </tr>
+  <tbody>
+</table>
 
 ## No yywrap() By Default
 
@@ -859,6 +943,27 @@ DIGIT [0-9]
 You can also assign to them inside actions but then you have to call
 `yyrecompile()` resp. `$lexer->yyrecompile()` from within the scanner
 so that the regular expressions are updated.
+
+## REJECT is Less Expensive
+
+Using [`REJECT`](#reject) in only one action slows down the whole scanner
+with flex, even those rules that do not call `REJECT`.  Using `REJECT`
+in kalex rules only has a very small performance penalty, and you pay
+the price only once per occurrence.
+
+The price is that all patterns have to be re-compiled, with the rejected
+rule, and possibly previously rejected rules omitted.  But the pattern
+set for that particular combination of rejected rules is cached so that
+the next `REJECT` will be almost for free.
+
+## Code Following REJECT is Allowed
+
+All code following `REJECT` in flex is discarded.  In kalex scanners, you
+can call REJECT wherever you want, not just as the last statement of your
+action.
+
+Note however that calling REJECT multiple times within one action leads to
+an undefined scanner behavior.
 
 # COPYRIGHT
 

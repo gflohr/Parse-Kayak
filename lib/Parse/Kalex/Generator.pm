@@ -420,6 +420,7 @@ EOF
 
     $output .= <<'EOF';
 
+    my $yytext = '';
     while (1) {
         # Difference to flex! We return false, not 0 on EOF.
         $self->__yywrap and return;
@@ -428,7 +429,7 @@ EOF
         pos $self->{yyinput} = $self->{yypos};
         $self->{yyinput} =~ /$__yypattern/g;
         my ($yyruleno, $__yycapture_offset, $__yycaptures) = @{$self->{__yymatch}};
-        my $yytext = $self->{__yytext} = $^N;
+        $yytext = $self->{__yytext} = $^N;
         $self->{yypos} += length $^N;
 
         @_ = ($self);
