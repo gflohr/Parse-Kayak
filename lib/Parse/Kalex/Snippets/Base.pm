@@ -177,9 +177,10 @@ sub __yypattern {
                     sort { $a <=> $b }
                     keys %{$self->{__yyrejected}};
         $self->__yycompileActivePatterns;
+    } else {
+        delete $self->{__yyrejected};
     }
 
-    delete $self->{__yyrejected};
     my $state = $self->{__yystate}->[-1];
 
     return $self->{__yypatterns}->{$rejected}->[$state];
