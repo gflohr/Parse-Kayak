@@ -62,6 +62,10 @@ sub REJECT {
     $yylexer->REJECT;
 }
 
+sub yymore {
+    $yylexer->yymore;
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

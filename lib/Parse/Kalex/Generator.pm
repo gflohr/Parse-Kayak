@@ -430,8 +430,7 @@ EOF
         $self->{yyinput} =~ /$__yypattern/g;
         my ($__yyruleno, $__yycapture_offset, $__yycaptures) =
             @{$self->{__yymatch}};
-        $self->{yytext} = $self->{__yytext} = $^N;
-        $self->{yypos} += length $^N;
+        $self->__yymatch($^N);
 
         @_ = ($self);
         foreach my $yy ($__yycapture_offset + 1
@@ -449,7 +448,7 @@ EOF
         if ($action =~ /^[ \011\013-\015]*\|[ \011\013-\015]*$/) {
             $action = '';  # Fall through to next rule.
         } else {
-            $action .= "; next;";
+            $action .= "\n        ; next;";
         }
 
         $output .= <<EOF;

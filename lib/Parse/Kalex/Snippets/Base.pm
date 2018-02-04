@@ -85,7 +85,7 @@ sub yyprint {
 sub ECHO {
     my ($self) = @_;
 
-    return $self->yyprint($^N);
+    return $self->yyprint($self->{yytext});
 }
 
 sub YYPUSH {
@@ -123,6 +123,29 @@ sub REJECT {
     $self->{__yyrejected}->{$ruleno} = 1;
     $self->{__yyreject_valid} = 1;
     $self->{yypos} -= length $self->{__yytext};
+
+    return $self;
+}
+
+sub yymore {
+    my ($self) = @_;
+
+    $self->{__yymore} = 1;
+
+    return $self;
+}
+
+sub __yymatch {
+    my ($self, $match) = @_;
+
+    $self->{__yytext} = $match;
+    $self->{yypos} += length $match;
+
+    if (delete $self->{__yymore}) {
+        $self->{yytext} .= $match;
+    } else {
+        $self->{yytext} = $match;
+    }
 
     return $self;
 }

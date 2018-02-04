@@ -799,6 +799,50 @@ Using `REJECT` in flex scanners is somewhat frowned upon because it slows
 down the entire scanner.  Kalex scanners work differently and you suffer
 from only a mostly negligible performance penalty.
 
+## yymore
+
+Use `$_[0]->yymore` in a [reentrant scanner](#reentrant-scanner).
+
+Normally, the variable `$yytext` gets overwritten after each match.
+Calling `yymore()` from an action has the effect that the matched text
+will be appended to `$yytext` instead for the next match.
+
+The following example will extract the contents of double-quoted strings
+and allows backslash escaping for arbitrary characters.
+
+```lex
+%s QUOTE
+%%
+"                  YYBEGIN('QUOTE');
+<QUOTE>[^\\"]+     yymore;
+<QUOTE>\\(.)       substr $yytext, -2, 1, $_[1], ''; yymore;
+<QUOTE>"           {
+                       YYBEGIN('INITIAL');
+                       chomp $yytext;
+                       yyprint "$yytext\n";
+                   }
+.|\n
+%%
+```
+
+Every double quote makes the scanner enter the start condition `QUOTE`.
+Inside `QUOTE` all sequences of characters other than a backslash or
+double-quote are matched.  But the call to `yymore` prevents `$yytext`
+to be overwritten.  Instead, the next match is appended.
+
+If a backslash is encountered, the backslash is replaced with the 
+escaped character, and `$yytext` is shortened by one character.  Again,
+the call to `yymore()` prevents `$yytext` from being overwritten in the
+next match.
+
+Finally, if an unescaped quote is encountered, it is `chomp`ed off of
+`$yytext` and the contents of `$yytext` is copied to the output with
+`yyprint`.
+
+Extracting quote-like constructs in this manner is maybe more 
+straightforward than the well-known Friedl-style regex for the same 
+purpose because you extract and unescape simultaneously.
+
 # FREQUENTLY ASKED QUESTIONS
 
 ## Quantifier Follows Nothing In Regex
