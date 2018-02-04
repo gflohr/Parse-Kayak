@@ -871,7 +871,7 @@ in flex and kalex.
     <tr>
       <td><code>BEGIN</code></td>
       <td><code>YYBEGIN</code></td>
-      <td>see <code>$_[0]->YYBEGIN</code></td>
+      <td><code>$_[0]->YYBEGIN</code></td>
     </tr>
     <tr>
       <td><code>ECHO</code></td>
