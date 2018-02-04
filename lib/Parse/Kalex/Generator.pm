@@ -425,6 +425,7 @@ EOF
         $self->__yywrap and return;
         my $__yypattern = $self->__yypattern;
 
+        pos $self->{yyinput} = $self->{yypos};
         $self->{yyinput} =~ /$__yypattern/g;
         my ($yyruleno, $__yycapture_offset, $__yycaptures) = @{$self->{__yymatch}};
         my $yytext = $self->{__yytext} = $^N;

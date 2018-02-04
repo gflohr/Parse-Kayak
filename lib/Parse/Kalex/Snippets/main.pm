@@ -58,6 +58,10 @@ sub yyprint {
     $yylexer->yyprint($buffer);
 }
 
+sub REJECT {
+    $yylexer->REJECT;
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

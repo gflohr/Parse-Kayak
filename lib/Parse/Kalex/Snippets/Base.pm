@@ -115,6 +115,18 @@ sub YYBEGIN {
     return $self;
 }
 
+sub REJECT {
+    my ($self) = @_;
+
+    my $ruleno = $self->{__yymatch}->[0];
+
+    $self->{__yyrejected}->{$ruleno} = 1;
+    $self->{__yyreject_valid} = 1;
+    $self->{yypos} -= length $self->{__yytext};
+
+    return $self;
+}
+
 sub __yyvalidateStartCondition {
     my ($self, $state) = @_;
 
@@ -159,10 +171,18 @@ sub __yypattern {
     my ($self) = @_;
 
     # FIXME! Check if a rule was rejected and generate a new pattern!
+    my $rejected = '';
+    if (delete $self->{__yyreject_valid}) {
+        $rejected = join ':',
+                    sort { $a <=> $b }
+                    keys %{$self->{__yyrejected}};
+        $self->__yycompileActivePatterns;
+    }
 
+    delete $self->{__yyrejected};
     my $state = $self->{__yystate}->[-1];
 
-    return $self->{__yypatterns}->[$state];
+    return $self->{__yypatterns}->{$rejected}->[$state];
 }
 
 sub __yyinitMatcher {
@@ -197,25 +217,40 @@ sub __yyinitMatcher {
         }
     }
 
+    $self->{__yyactive} = \@active;
+
+    $self->__yycompileActivePatterns;
+
+    return $self;
+}
+
+sub __yycompileActivePatterns {
+    my ($self, $rule) = @_;
+
+    my $rejected = $self->{__yyrejected} ?
+        (join ':', sort { $a <=> $b } keys %{$self->{__yyrejected}}) : '';
+    return $self if exists $self->{__yypatterns}->{$rejected};
+
     my @patterns;
-    foreach my $rules (@active) {
-        push @patterns, $self->__yycompilePatterns($rules, -1);
+    foreach my $rules (@{$self->{__yyactive}}) {
+        push @patterns, $self->__yycompilePatterns($rules);
     }
 
-    $self->{__yypatterns} = \@patterns;
+    $self->{__yypatterns}->{$rejected} = \@patterns;
 
     return $self;
 }
 
 sub __yycompilePatterns {
-    my ($self, $rules, $reject) = @_;
+    my ($self, $rules) = @_;
 
     # Count the number of parentheses so that backreferences can be fixed
     # and @_ will be filled correctly.
     my $parentheses = 0;
     my @patterns;
+    my $rejected = $self->{__yyrejected} || {};
     foreach my $r (@$rules) {
-        next if $r <= $reject;
+        next if $rejected->{$r};
 
         ++$parentheses;
         if ($self->{__yypattern_cache}->[$r]->[$parentheses]) {
