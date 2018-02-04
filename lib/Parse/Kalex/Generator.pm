@@ -425,12 +425,17 @@ EOF
         $self->__yywrap and return;
         my $__yypattern = $self->__yypattern;
 
-        my @yymatches = $self->{yyinput} =~ $__yypattern;
+        $self->{yyinput} =~ /$__yypattern/g;
         my ($yyruleno, $__yycapture_offset, $__yycaptures) = @{$self->{__yymatch}};
-        @_ = ($self, splice @yymatches, $__yycapture_offset, $__yycaptures);
-
         my $yytext = $self->{__yytext} = $^N;
-        substr $self->{yyinput}, 0, length $^N, '';
+        $self->{yypos} += length $^N;
+
+        @_ = ($self);
+        foreach my $yy ($__yycapture_offset + 1
+                       .. $__yycapture_offset +  $__yycaptures) {
+            push @_, substr $self->{yyinput}, $-[$yy], $+[$yy] - $-[$yy]; 
+        };
+
         goto "YYRULE$yyruleno";
 EOF
 

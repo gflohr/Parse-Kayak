@@ -138,9 +138,10 @@ sub __yywrap {
     if (!exists $self->{yyinput}) {
         # First round.
         $self->{yyinput} = join '', $self->__yygetlines;
+        $self->{yypos} = 0;
     }
 
-    while (!length $self->{yyinput}) {
+    while ($self->{yypos} >= length $self->{yyinput}) {
         if ($self->{__yyoptions}->{yywrap}) {
             return $self if $self->yywrap;
         } else {
@@ -148,6 +149,7 @@ sub __yywrap {
         }
 
         $self->{yyinput} = join '', $self->__yygetlines;
+        $self->{yypos} = 0;
     }
 
     return;
@@ -238,7 +240,7 @@ sub __yycompilePatterns {
 
     use re qw(eval);
 
-    return qr/^$re/;
+    return qr/\G$re/m;
 }
 
 sub __yyfixupRegex {

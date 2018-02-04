@@ -695,6 +695,33 @@ YYRULE3: $self->ECHO;; next;
 The misplaced comment is misinterpreted as a pattern match, and that match
 often ends at path references in the source file.
 
+## Why Does Kalex Substitute and Not Just Match?
+
+Kalex scanners roughly have the following structure:
+
+```perl
+while (length $yyinput) {
+    $input =~ s/^(PATTERN)//;
+
+    # Execute action for the current match.
+}
+```
+
+Why not like this?
+
+```perl
+my $pos = 0;
+while ($pos < length $yyinput) {
+    pos = $pos;
+    $yyinput =~ /\G(PATTERN)/g;
+    $pos += length $1;
+
+    # Execute action for the current match.
+}
+```
+
+One disadvantage would be that 
+
 # DIFFERENCES TO FLEX
 
 ## No yywrap() By Default
