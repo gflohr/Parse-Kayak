@@ -73,8 +73,8 @@ manual so that you can easily compare features.
 
 # INTRODUCTION
 
-Kalex reads the given scanner description from the given input files,
-or standard input if no input files were specified.  The description 
+Kalex reads the given scanner description from the given input sources,
+or standard input if no input sources were specified.  The description 
 mainly consists of *rules* with a regular expression to match on the 
 left-hand side and an optional action to execute for each match on 
 the right-hand side. The action consists of arbitrary Perl code.  
@@ -156,7 +156,8 @@ name definition
 
 `name` must be a valid Perl identifier.  Perl identifiers may start
 with one of the letters "a" to "z", "A" to "Z" or the underscore "_",
-followed by an arbitrary number of these characters.
+followed by an arbitrary number of these characters or the digits
+"0" to "9".
 
 Non-ASCII characters are also allowed but it depends on your version
 of Perl and your user code whether such identifiers are accepted
@@ -231,7 +232,7 @@ The form `%s` declares an *inclusive* start condition, the form
 [Start Conditions](#start-conditions) below for more information
 on start conditions.
 
-The same restrictions on possible names apply as for [Name
+The same restrictions for possible names apply as for [Name
 Definitions](#name-definitions) above.
 
 You can place comments after start conditions.
@@ -239,7 +240,8 @@ You can place comments after start conditions.
 ### Indented Text
 
 All indented text in the definitions section is copied verbatim to
-the generated scanner.  If you generate a reentrant scanner, the
+the generated scanner.  If you generate a [reentrant
+scanner](#reentrant-scanners), the
 text is inserted right after the `package` definition in the generated
 code.
 
@@ -265,7 +267,7 @@ RULE...
 ```
 
 The enclosed code will be placed at the top of the file, outside
-of a possible `package` statement for re-entrant parsers.
+of a possible `package` statement for reentrant parsers.
 
 Multiple `%top` sections are allowed.  Their order is preserved.
 
@@ -281,7 +283,7 @@ style comments in indented text!
 
 ### %Option Directives
 
-Option are defined with the `%option` directive
+Options are defined with the `%option` directive
 
 ```lex
 %option noyywrap outfile="parse.pl"
@@ -290,7 +292,7 @@ Option are defined with the `%option` directive
 Boolean options can be preceded by "no" to negate them.  Options
 that take a value receive the value in a single- or double-quoted
 string.  Escape sequences like `\n` are only expanded in
-double-quoted strings.
+double-quoted strings. (FIXME!)
 
 The following options are supported;
 
@@ -304,7 +306,7 @@ default is false.
 
 ### Rules
 
-The rules section consists an arbitrary number of rules defined
+The rules section consists of an arbitrary number of rules defined
 as:
 
 ```lex
@@ -315,7 +317,7 @@ The first part of the rule is an optional comma-separated list of
 start conditions enclosed in angle brackets.  If present, the
 rule is only active in one of the listed start conditions.
 
-[Start Conditions](#start-conditions) below for more information
+See [Start Conditions](#start-conditions) below for more information
 on start conditions.
 
 The pattern can be almost any Perl regular expression.  See
@@ -437,12 +439,19 @@ variable `$digit` defined.
 
 On the other hand, this will work as expected:
 
-DIGIT [0-9]
 ```
+DIGIT [0-9]
 %%
 $DIGIT+\.$DIGIT+            return FLOAT, $yytext;
 %%
 ```
+
+## ANCHORS ("^" and "$")
+
+All kalex patterns are compiled with the `/m` modifier.  That means that
+`^` stands for the beginning of a line or the beginning of input, and
+`$` stands for the end of a line or the end of input.  See the section
+[How the Input Is Matched](#how-the-input-is-matched) for more information.
 
 ## Multi-Line Patterns
 
@@ -474,27 +483,18 @@ See `perldoc perlre` for more information.  Just imagine that instead of
 # HOW THE INPUT IS MATCHED
 
 The generated scanner matches its input against the patterns provided in
-the rules section, stopping at the first match.  It strips the matched
-string off of the beginning of the input.  This is an important difference
-to flex:
-
-While flex really scans the input, proceding match by match, kalex throws
-away the parts of the input that have matched.  The input string 
-constantly shrinks in kalex (unless you call `yyunput()`).  A scanner
-that just consists of the default rule and default action corresponds
-to the following Perl code:
+the rules section, stopping at the first match.  The patterns are 
+anchored to the position where the last match ended.  The generated
+`yylex()` function roughly looks like this:
 
 ```perl
 sub yylex {
-    while (length $input) {
-        $input =~ s/^(.|\n)//;
-        yyprint $1;
+    while (pos() < length $yytext) {
+        $yytext =~ /\G$pattern_for_this_start_condition/gm;
+        execute_action();
     }
 }
 ```
-
-All patterns are automatically anchored to the beginning of the 
-(current!) string (`^`).
 
 If a rule matches but the match is empty, you will create  an endless 
 loop unless you change the start condition in the action code or return.
@@ -539,7 +539,7 @@ Kalex will translate that into a regular expression which will roughly look
 like this in Perl:
 
 ```perl
-qr{^([^a-zA-Z0-9 ])(?:{$r = 0})|(.|\n)(?:{$r = 1})|(.|\n)(?:{$r = 2})}
+qr{\G([^a-zA-Z0-9 ])(?:{$r = 0})|(.|\n)(?:{$r = 1})|(.|\n)(?:{$r = 2})}
 ```
 
 It creates a long regular expression with alternations, where each 
@@ -552,13 +552,6 @@ helps doing the rest of the job faster.
 If you are using [start conditions](#start-conditions), then such a
 regular expression is generated for each of them.  They differ in the
 combination of active rules for each start condition.
-
-The above should also make clear why anchoring a rule to the start of
-string is not needed.  It is already done.  This is also true if you
-use the the `/m` modifier that changes the meaning of `^` to "beginning
-of line" instead of "begining of input".  Since the submatch is already
-anchored to the beginning of the input, it can only match if the 
-beginning of the line is also the beginning of the input.
 
 ### Captures
 
@@ -587,7 +580,7 @@ Rule 1 is often hard to follow and can introduce bugs if you are not
 careful enough.
 
 Example for rule 2: You want to create a scanner that strips off all
-HTML markups.  Yes, it should also handle HTML comments ...
+HTML markups (we ignore HTML comments for simplicity):
 
 Bad:
 
@@ -599,9 +592,6 @@ Bad:
 <MARKUP>.|\n    /* discard */
 .|\n            ECHO;
 ```
-
-The last rule is actually not needed because it's equivalent to the default
-rule.  
 
 Good:
 
@@ -615,6 +605,9 @@ That does exactly the same as before but it matches the larget possible
 chunks of data.  That means it does less matches, and the action code
 gets executed less often.  The "bad" example above instead matches 
 one character at a time.
+
+The last rule of the "bad" example is not needed because it is identical
+to the default rule.
 
 ## Alternations
 
@@ -695,33 +688,6 @@ YYRULE3: $self->ECHO;; next;
 The misplaced comment is misinterpreted as a pattern match, and that match
 often ends at path references in the source file.
 
-## Why Does Kalex Substitute and Not Just Match?
-
-Kalex scanners roughly have the following structure:
-
-```perl
-while (length $yyinput) {
-    $input =~ s/^(PATTERN)//;
-
-    # Execute action for the current match.
-}
-```
-
-Why not like this?
-
-```perl
-my $pos = 0;
-while ($pos < length $yyinput) {
-    pos = $pos;
-    $yyinput =~ /\G(PATTERN)/g;
-    $pos += length $1;
-
-    # Execute action for the current match.
-}
-```
-
-One disadvantage would be that 
-
 # DIFFERENCES TO FLEX
 
 ## No yywrap() By Default
@@ -748,24 +714,6 @@ Start conditions in kalex can be stacked.
 
 This feature can sometimes provide elegant solutions.  Most of the time it
 is a recipe for trouble because it is very easy to get lost.
-
-## A Dollar-Sign Meand End-Of-Input, Not End-Of-Line
-
-A dollar sign in flex always stands for the end of the line.  In Kalex
-it stands for the end of input, more precisely, for the end of *one*
-input stream if you use `[yymore()](#yymore)` for subsequently parsing
-multiple input streams.
-
-The exact equivalent of the dollar sign in flex is `\Z`.
-
-## A Caret Does Not Make Sense
-
-A caret (`^`) in flex matches the beginning of a line.  That is either
-right after a newline or at the beginning of input.
-
-A rough equivalent for kalex would be `\A` which matches the beginning
-of the string.  But since matched text in kalex is always stripped off,
-it does not make sense.
 
 ## The Best Match Is Not Necessarily the Longest
 
