@@ -680,12 +680,65 @@ action for the following rule":
 
 ```lex
 [-a-zA-Z]+        /* fall through */ |
-[0-9]+\.[0-9]+    /* fall through */ |
+                                       /* fall through */
+[0-9]+\.[0-9]+                       |
 [0-9]+                               yyprint(">>>$yytext<<<");
 ```
 
-Not that you cannot put comments after the pipe symbol because it cannot
-be distinguished from legitimate Perl code.
+Note that you cannot put comments after the pipe symbol because it cannot
+be distinguished from legitimate Perl code.  Comments before the pipe
+symbol or above the line are okay.
+
+Actions can contain arbitrary Perl code including `return` statements to
+return a value to whatever routine called `yylex()`. Each time `yylex()`
+is called it continues processing tokens from where it last left o  until 
+it either reaches the end of input or executes a `return`.
+
+A couple of functions/methods are defined by the scanner:
+
+## ECHO
+
+Use `$self->ECHO()` in a [reentrant scanner](#reentrant-scanners).
+
+`ECHO` copies `$yytext` to the scanner's output.
+
+## YYBEGIN
+
+Use `$self->YYBEGIN()` in a [reentrant scanner](#reentrant-scanner).
+
+This method is the equivalent of `BEGIN` for flex scanners.  It 
+has been renamed to `YYBEGIN` for kalex because `BEGIN` is a reserved
+word in Perl.
+
+`YYBEGIN('FOOBAR')` puts the scanner into the start condition `FOOBAR`
+and replaces the current start condition stack with `(FOOBAR)`.
+
+The argument to `YYBEGIN` is a string!  Calling it with an undeclared
+start condition name will cause a run-time error.
+
+The start condition `0` is the same as `'INITIAL'`.
+
+## YYPUSH
+
+Use `$self->YYPUSH()` in a [reentrant scanner](#reentrant-scanner).
+
+`YYPUSH('FOOBAR')` puts the scanner into the start condition `FOOBAR`
+and pushes `FOOBAR` onto the start condition stack.  You can fall
+back to the previous start condition with [`YYPOP`](#yypop).
+
+The argument to `YYPUSH` is a string!  Calling it with an undeclared
+start condition name will cause a run-time error.
+
+## YYPOP
+
+Use `$self->YYPOP()` in a [reentrant scanner](#reentrant-scanner).
+
+`YYPOP` will remove the last pushed start condition from the start
+condition stack and put the scanner back into the condition it was
+before the last call to [`YYPUSH`](#yypush).
+
+Calling `YYPOP()` if the start condition stack has only one element,
+will cause a run-time error.
 
 # FREQUENTLY ASKED QUESTIONS
 
