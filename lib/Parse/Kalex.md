@@ -859,8 +859,8 @@ in flex and kalex.
 <table>
   <thead>
     <tr>
-      <th colspan="2">kalex</th>
       <th rowspan="2">flex</th>
+      <th colspan="2">kalex</th>
     </tr>
     <tr>
       <th>non-reentrant</th>
@@ -869,9 +869,44 @@ in flex and kalex.
   </thead>
   <tbody>
     <tr>
-      <td><code>yylex</code></td>
-      <td><code>yylex</code></td>
-      <td><code>yylex</code></td>
+      <td><code>BEGIN</code></td>
+      <td><code>YYBEGIN</code></td>
+      <td>see <code>$_[0]->YYBEGIN</code></td>
+    </tr>
+    <tr>
+      <td><code>ECHO</code></td>
+      <td><code>ECHO</code></td>
+      <td><code>$_[0]->ECHO</code></td>
+    </tr>
+    <tr>
+      <td><code>REJECT</code></td>
+      <td><code>REJECT</code></td>
+      <td><code>$_[0]->REJECT</code></td>
+    </tr>
+    <tr>
+      <td>-</td>
+      <td><code>YYPUSH()</code></td>
+      <td><code>$_[0]->YYPUSH()</code></td>
+    </tr>
+    <tr>
+      <td><code>yyleng</code></td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>yylex()</code></td>
+      <td><code>yylex()</code></td>
+      <td><code>$_[0]->yylex()</code></td>
+    </tr>
+    <tr>
+      <td><code>yymore()</code></td>
+      <td><code>yymore()</code></td>
+      <td><code>$_[0]->yymore()</code></td>
+    </tr>
+    <tr>
+      <td><code>yytext</code></td>
+      <td><code>$yytext</code></td>
+      <td><code>$_[0]->{yytext}</code></td>
     </tr>
   <tbody>
 </table>
