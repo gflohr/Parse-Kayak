@@ -595,7 +595,7 @@ sub scan {
     my %options;
     foreach my $option (qw(debug)) {
         if (exists $self->{__yyoptions}->{$option}) {
-            $options{$option} - $self->{__yyoptions}->{$option};
+            $options{$option} = $self->{__yyoptions}->{$option};
         }
     }
     $parser->YYData->{generator} = Parse::Kalex::Generator->new($self,

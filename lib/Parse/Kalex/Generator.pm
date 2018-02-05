@@ -373,12 +373,14 @@ EOF
         push @names, "$name => \\$value";
     }
     my $variables = join ', ', @names;
+    my $conditions = $self->__dumpVariable($self->{__condition_names});
 
     $output .= <<EOF;
     ];
     # FIXME! yyprefix all of them!
     \$self->{__condition_types} = $ctypes;
     \$self->{__yycondition_names} = $cnames;
+    \$self->{__yyconditions} = $conditions;
     \$self->{__yyoptions} = $options;
     \$self->{__yyvariables} = { $variables };
 

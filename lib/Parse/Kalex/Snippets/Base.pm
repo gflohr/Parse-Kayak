@@ -171,14 +171,15 @@ sub __yymatch {
         my $ruleno = $self->{__yymatch}->[0];
         my $default_rule = -1 + @{$self->{__rules}};
         my $pretty_match = $self->__yyescape($match);
+        my $condition = $self->{__yyconditions}[$self->{__state}->[-1]];
         if ($ruleno == $default_rule) {
-            print STDERR qq{--accepting default rule ("$pretty_match")\n};
+            print STDERR qq{<$condition> accepting default rule ("$pretty_match")\n};
         } else {
             my $rule = $self->{__rules}->[$ruleno];
             my $location = $rule->[4]->[0]
                 . " line " . $rule->[4]->[1];
             ++$ruleno;
-            print STDERR qq{--accepting rule #$ruleno at $location ("$pretty_match")\n};
+            print STDERR qq{<$condition> accepting rule #$ruleno at $location ("$pretty_match")\n};
         }
     }
 
