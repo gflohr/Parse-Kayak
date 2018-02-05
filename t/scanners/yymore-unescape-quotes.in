@@ -1,0 +1,2 @@
+print "Cannot open \"test.l\" for reading.";
+print "Cannot close \"test.l\".";

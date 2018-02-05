@@ -813,16 +813,15 @@ and allows backslash escaping for arbitrary characters.
 ```lex
 %s QUOTE
 %%
-"                  YYBEGIN('QUOTE');
 <QUOTE>[^\\"]+     yymore;
-<QUOTE>\\(.)       substr $yytext, -2, 1, $_[1], ''; yymore;
+<QUOTE>\\(.)       substr $yytext, -2, 2, $_[1]; yymore;
 <QUOTE>"           {
                        YYBEGIN('INITIAL');
-                       chomp $yytext;
+                       chop $yytext;
                        yyprint "$yytext\n";
                    }
+"                  YYBEGIN('QUOTE');
 .|\n
-%%
 ```
 
 Every double quote makes the scanner enter the start condition `QUOTE`.
