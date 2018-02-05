@@ -553,6 +553,7 @@ sub __yylex {
     }
 
     my $method = $self->__yyvalidateStartCondition($self->{__yystate}->[-1]);
+$DB::single = 1;
     
     my ($token, $yytext) = $self->$method;
 
@@ -999,7 +1000,7 @@ sub __readDefRegex {
 sub __readDefCC {
     my ($self) = @_;
 
-    my $class = '[';
+    my $class = '';
     while (length $self->{__yyinput}) {
         if ($self->{__yyinput} =~ s/^(\\.)//o) {
             $class .= $1;
@@ -1009,8 +1010,13 @@ sub __readDefCC {
         } elsif ($self->{__yyinput} =~ s/^\n//o) {
             return $class;
         } elsif ($self->{__yyinput} =~ s/^(.)//o) {
-            return PATTERN => $1;
+            $class .= $1;
         }
+    }
+    
+    if (!length $self->{__yyinput}) {
+        # FIXME!
+        die "unterminated character class";
     }
 
     return $class;
