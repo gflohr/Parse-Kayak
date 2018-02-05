@@ -24,7 +24,6 @@ sub new {
         yyinname => '<stdin>',
         yyout => \*STDOUT,
         yyoutname => '<stdout>',
-        __yypattern_cache => [],
         __yystate => [0],
         yy_kalex_debug => 1,
     }, $class;
@@ -142,6 +141,8 @@ sub yyrecompile {
 
     local $Storable::canonical = 1;
     $self->{__yycanonical} = freeze $self->{__yyvariables};
+
+    $self->__yycompileActivePatterns;
 
     return $self;
 }
@@ -267,9 +268,6 @@ sub __yypattern {
 sub __yyinitMatcher {
     my ($self) = @_;
 
-    local $Storable::canonical = 1;
-    $self->{__yycanonical} = freeze $self->{__yyvariables};
-
     # The indices into this array are condition numbers, the items
     # are arrays of active rule numbers;
     my @active;
@@ -300,8 +298,6 @@ sub __yyinitMatcher {
     }
 
     $self->{__yyactive} = \@active;
-
-    $self->__yycompileActivePatterns;
 
     return $self;
 }
@@ -336,10 +332,6 @@ sub __yycompilePatterns {
         next if $rejected->{$r};
 
         ++$parentheses;
-        if ($self->{__yypattern_cache}->[$r]->[$parentheses]) {
-            push @patterns, $self->{__yypattern_cache}->[$r]->[$parentheses];
-            next;
-        }
 
         my $rule = $self->{__rules}->[$r];
         my $regex = $rule->[1];
@@ -348,8 +340,6 @@ sub __yycompilePatterns {
         
         $pattern .= "(?{\$self->{__yymatch} = [$r, $parentheses, $rule->[2]]})";
         push @patterns, $pattern;
-
-        $self->{__yypattern_cache}->[$r]->[$parentheses] = $pattern;
 
         $parentheses += $rule->[2];
     }

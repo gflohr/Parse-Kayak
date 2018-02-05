@@ -367,12 +367,6 @@ EOF
         map { $_ => $count++ } @{$self->{__condition_names}}
     });
     my $options = $self->__dumpVariable($self->{__options});
-    my @names;
-    foreach my $name (keys %{$self->{__names}}) {
-        my $value = $self->__dumpVariable($self->{__names}->{$name});
-        push @names, "$name => \\$value";
-    }
-    my $variables = join ', ', @names;
     my $conditions = $self->__dumpVariable($self->{__condition_names});
 
     $output .= <<EOF;
@@ -382,7 +376,6 @@ EOF
     \$self->{__yycondition_names} = $cnames;
     \$self->{__yyconditions} = $conditions;
     \$self->{__yyoptions} = $options;
-    \$self->{__yyvariables} = { $variables };
 
     \$self->__yyinitMatcher;
 }
@@ -407,22 +400,39 @@ EOF
         $output .= <<'EOF';
 package main;
 
+use Storable qw(freeze);
+
 sub yylex {
     my ($self) = $yylexer;
 
 EOF
     }
 
-    foreach my $name (keys %{$self->{__names}}) {
-        my $value = $self->__dumpVariable($self->{__names}->{$name});
-        my $dollar_name = '$' . $name;
+    my $decls = join ', ', map { '$' . $_ } sort keys %{$self->{__names}};
+    if (length $decls) {
         $output .= <<EOF;
-    my $dollar_name = $value;
-    \$self->{__yyvariables}->{$name} = \\$dollar_name;
+    my ($decls);
 EOF
     }
 
     $output .= <<'EOF';
+    if (!$self->{__yyvariables}) {
+        $self->{__yyvariables} = {};
+EOF
+
+    foreach my $name (keys %{$self->{__names}}) {
+        my $value = $self->__dumpVariable($self->{__names}->{$name});
+        my $dollar_name = '$' . $name;
+        $output .= <<EOF;
+        $dollar_name = $value;
+        \$self->{__yyvariables}->{$name} = \\$dollar_name;
+EOF
+    }
+
+    $output .= <<'EOF';
+
+        $self->yyrecompile;
+    }
 
     $self->{yytext} = '';
     while (1) {
