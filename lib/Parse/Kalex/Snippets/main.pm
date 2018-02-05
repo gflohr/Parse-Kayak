@@ -68,6 +68,10 @@ sub yymore {
     $yylexer->yymore;
 }
 
+sub yyrecompile {
+    $yylexer->yyrecompile;
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

@@ -14,6 +14,7 @@ package Parse::Kalex::Snippets::Base;
 use strict;
 
 use Scalar::Util qw(blessed reftype);
+use Storable qw(freeze);
 
 sub new {
     my ($class, %options) = @_;
@@ -136,6 +137,15 @@ sub yymore {
     return $self;
 }
 
+sub yyrecompile {
+    my ($self) = @_;
+
+    local $Storable::canonical = 1;
+    $self->{__yycanonical} = freeze $self->{__yyvariables};
+
+    return $self;
+}
+
 sub __yyescape {
     my ($self, $string) = @_;
 
@@ -251,11 +261,14 @@ sub __yypattern {
 
     my $state = $self->{__yystate}->[-1];
 
-    return $self->{__yypatterns}->{$rejected}->[$state];
+    return $self->{__yypatterns}->{$self->{__yycanonical}}->{$rejected}->[$state];
 }
 
 sub __yyinitMatcher {
     my ($self) = @_;
+
+    local $Storable::canonical = 1;
+    $self->{__yycanonical} = freeze $self->{__yyvariables};
 
     # The indices into this array are condition numbers, the items
     # are arrays of active rule numbers;
@@ -296,16 +309,17 @@ sub __yyinitMatcher {
 sub __yycompileActivePatterns {
     my ($self, $rule) = @_;
 
+    my $canonical = $self->{__yycanonical};
     my $rejected = $self->{__yyrejected} ?
         (join ':', sort { $a <=> $b } keys %{$self->{__yyrejected}}) : '';
-    return $self if exists $self->{__yypatterns}->{$rejected};
+    return $self if exists $self->{__yypatterns}->{$canonical}->{$rejected};
 
     my @patterns;
     foreach my $rules (@{$self->{__yyactive}}) {
         push @patterns, $self->__yycompilePatterns($rules);
     }
 
-    $self->{__yypatterns}->{$rejected} = \@patterns;
+    $self->{__yypatterns}->{$canonical}->{$rejected} = \@patterns;
 
     return $self;
 }
