@@ -592,7 +592,15 @@ sub scan {
     $self->{__yyinput_files} = \@input_files;
 
     my $parser = Parse::Kalex::Parser->new;
-    $parser->YYData->{generator} = Parse::Kalex::Generator->new($self);
+    my %options;
+    foreach my $option (qw(debug)) {
+        if (exists $self->{__yyoptions}->{$option}) {
+            $options{$option} - $self->{__yyoptions}->{$option};
+        }
+    }
+    $parser->YYData->{generator} = Parse::Kalex::Generator->new($self,
+                                                                %options);
+
     $parser->YYData->{lexer} = $self;
     my $result = $parser->YYParse(yylex => $yylex,
                                   yyerror => $yyerror,
@@ -677,6 +685,9 @@ sub __getOptions {
 
     Getopt::Long::Configure('bundling');
     GetOptionsFromArray($argv,
+        # Debugging
+        'd|debug' => \$options{debug},
+
         # Files
         'o|outfile=s' => \$options{outfile},
         't|stdout' => \$options{stdout},
@@ -720,7 +731,7 @@ sub __displayVersion {
 
     $package =~ s/::/-/g;
 
-    print __x('{program} ({package}) {version}
+    print __x('{program} (Parse-Kayak) {version}
 Copyright (C) 2018, Guido Flohr <guido.flohr@cantanea.com>,
 all rights reserved.
 This program is free software. It comes without any warranty, to
@@ -728,7 +739,7 @@ the extent permitted by applicable law. You can redistribute it
 and/or modify it under the terms of the Do What the Fuck You Want
 to Public License, Version 2, as published by Sam Hocevar. See
 http://www.wtfpl.net/ for more details.
-', program => $self->programName, package => $package, version => $version);
+', program => $self->programName, version => $version);
 
     exit 0;
 }
@@ -749,6 +760,16 @@ EOF
     print __(<<EOF);
 Mandatory arguments to long options are mandatory for short options too.
 Similarly for optional arguments.
+EOF
+
+    print "\n";
+
+    print __(<<EOF);
+Debugging:
+EOF
+
+    print __(<<EOF);
+  -d, --debug                  enable debug mode in scanner
 EOF
 
     print "\n";

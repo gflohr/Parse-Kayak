@@ -29,6 +29,8 @@ tie my $yyinput, 'Parse::Kalex::Snippets::main::Tier',
     $yylexer, 'yyinput';
 tie my $yypos, 'Parse::Kalex::Snippets::main::Tier',
     $yylexer, 'yypos';
+tie my $yy_kalex_debug, 'Parse::Kalex::Snippets::main::Tier',
+    $yylexer, 'yy_kalex_debug';
 
 sub ECHO {
     $yylexer->ECHO;

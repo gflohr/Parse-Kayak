@@ -25,6 +25,7 @@ sub new {
         yyoutname => '<stdout>',
         __yypattern_cache => [],
         __yystate => [0],
+        yy_kalex_debug => 1,
     }, $class;
 
     # This will inject the following members:
@@ -135,8 +136,51 @@ sub yymore {
     return $self;
 }
 
+sub __yyescape {
+    my ($self, $string) = @_;
+
+    my %escapes = (
+        "\007" => 'a',
+        "\010" => 'b',
+        "\011" => 't',
+        "\012" => 'n',
+        #"\013" => 'v',
+        "\014" => 'f',
+        "\015" => 'r',
+        "\033" => 'e',
+        '"' => '"',
+        '\\' => '\\',
+    );
+
+    $string =~ s{([\000-\037\\"])}{
+        if (exists $escapes{$1}) {
+            '\\' . $escapes{$1};
+        } else {
+            sprintf '\\%03o', ord $1;
+        }
+    }ge;
+
+    return $string;
+}
+
 sub __yymatch {
     my ($self, $match) = @_;
+
+    if ($self->{__yyoptions}->{debug}
+        && $self->{yy_kalex_debug}) {
+        my $ruleno = $self->{__yymatch}->[0];
+        my $default_rule = -1 + @{$self->{__rules}};
+        my $pretty_match = $self->__yyescape($match);
+        if ($ruleno == $default_rule) {
+            print STDERR qq{--accepting default rule ("$pretty_match")\n};
+        } else {
+            my $rule = $self->{__rules}->[$ruleno];
+            my $location = $rule->[4]->[0]
+                . " line " . $rule->[4]->[1];
+            ++$ruleno;
+            print STDERR qq{--accepting rule #$ruleno at $location ("$pretty_match")\n};
+        }
+    }
 
     $self->{__yytext} = $match;
     $self->{yypos} += length $match;

@@ -933,6 +933,11 @@ in flex and kalex.
       <td><code>$_[0]->YYPUSH()</code></td>
     </tr>
     <tr>
+      <td><code>yy_flex_debug</code></td>
+      <td><code>$yy_kalex_debug</code></td>
+      <td><code>$_[0]->{yy_kalex_debug}</code></td>
+    </tr>
+    <tr>
       <td><code>yyleng</code></td>
       <td>-</td>
       <td>-</td>

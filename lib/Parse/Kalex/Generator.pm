@@ -17,7 +17,7 @@ use Locale::TextDomain qw(kayak);
 use Data::Dumper;
 
 sub new {
-    my ($class, $lexer) = @_;
+    my ($class, $lexer, %options) = @_;
 
     bless {
         __errors => 0,
@@ -34,7 +34,7 @@ sub new {
         __condition_types => ['s'],
         __condition_names => ['INITIAL'],
         __rules => [],
-        __options => {},
+        __options => {%options},
         __names => {},
     }, $class;
 }
@@ -55,6 +55,7 @@ sub checkOption {
 
     my %options = (
         yywrap => 1,
+        debug => 0,
     );
     my %voptions = (
     );
@@ -354,7 +355,8 @@ EOF
         # We need the start conditions, the pattern, the number of
         # parentheses and the list of fixups.
         my $record = [$rule->[0], $rule->[1]->[0], $rule->[1]->[1], 
-                      $rule->[1]->[2]];
+                      $rule->[1]->[2],
+                      [@{$rule->[3]}]];
         my $dump = $self->__dumpVariable($record);
         $output .= "        $dump,\n";
     }
