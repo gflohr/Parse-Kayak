@@ -1,0 +1,11 @@
+
+true
+
+
+[% FOREACH item IN list %]
+item
+[% END %]
+
+
+true
+

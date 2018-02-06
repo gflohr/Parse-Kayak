@@ -1,0 +1,11 @@
+[% IF 1 %]
+true
+[% END %]
+[% TAGS [@ @] %]
+[% FOREACH item IN list %]
+item
+[% END %]
+[@ TAGS [% %] @]
+[% IF 1 %]
+true
+[% END %]
