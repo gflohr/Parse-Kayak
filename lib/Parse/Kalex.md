@@ -29,11 +29,11 @@ Or from Perl:
          * [Name Definitions](#name-definitions)
          * [Start Condition Definitions](#start-condition-definitions)
          * [Indented Text](#indented-text)
-         * [%{ CODE %} Sections](#-code-sections)
-         * [%top Sections](#-top-sections)
+         * [%{ CODE %} Sections](#code-sections)
+         * [%top Sections](#top-sections)
          * [Comments](#comments)
-         * [%Option Directives](#-option-directives)
-            * [%option yywrap/yynowrap](#-option-yywrap-yynowrap)
+         * [%Option Directives](#option-directives)
+            * [%option yywrap/yynowrap](#option-yywrap-yynowrap)
       * [Format of the Rules Section](#format-of-the-rules-section)
          * [Rules](#rules)
       * [Format of the User Code Section](#format-of-the-user-code-section)
@@ -41,7 +41,7 @@ Or from Perl:
    * [PATTERNS](#patterns)
       * [Submatches](#submatches)
       * [Interpolation](#interpolation)
-      * [ANCHORS ("^" and "$")](#anchors-and-)
+      * [ANCHORS ("^" and "$")](#anchors-and)
       * [Multi-Line Patterns](#multi-line-patterns)
    * [HOW THE INPUT IS MATCHED](#how-the-input-is-matched)
       * [How It Really Works](#how-it-really-works)
@@ -55,10 +55,13 @@ Or from Perl:
       * [YYPUSH](#yypush)
       * [YYPOP](#yypop)
       * [REJECT](#reject)
+      * [$yytext](#yytext)
+      * [yymore](#yymore)
    * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
       * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
       * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
+      * [Functions and Variables](#functions-and-variables)
       * [No yywrap() By Default](#no-yywrap-by-default)
       * [BEGIN is YYBEGIN](#begin-is-yybegin)
       * [YYPUSH and YYPOP](#yypush-and-yypop)
@@ -705,7 +708,7 @@ return a value to whatever routine called `yylex()`. Each time `yylex()`
 is called it continues processing tokens from where it last left o  until 
 it either reaches the end of input or executes a `return`.
 
-A couple of functions/methods are defined by the scanner:
+These functions/methods are defined by the scanner:
 
 ## ECHO
 
@@ -799,9 +802,7 @@ Using `REJECT` in flex scanners is somewhat frowned upon because it slows
 down the entire scanner.  Kalex scanners work differently and you suffer
 from only a mostly negligible performance penalty.
 
-## $yytext
-
-## yymore
+## yymore()
 
 Use `$_[0]->yymore` in a [reentrant scanner](#reentrant-scanner).
 
@@ -843,6 +844,15 @@ Finally, if an unescaped quote is encountered, it is `chomp`ed off of
 Extracting quote-like constructs in this manner is maybe more 
 straightforward than the well-known Friedl-style regex for the same 
 purpose because you extract and unescape simultaneously.
+
+## yyless()
+
+## yyrecompile()
+
+Use `$_[0]->yyrecompile` in a [reentrant scanner](#reentrant-scanner).
+
+[Name definitions](#name-definitions) are Perl variables (scalars) of the 
+same name that are lexically scoped to the lexing function [`yylex()`](#yylex).
 
 # FREQUENTLY ASKED QUESTIONS
 
@@ -940,7 +950,7 @@ in flex and kalex.
     </tr>
     <tr>
       <td>-</td>
-      <td><code>YYPUSh()</code></td>
+      <td><code>YYPUSH()</code></td>
       <td><code>$_[0]->YYPUSH()</code></td>
       <td>push a <a href="#start-conditions">start condition</a> on the stack</td>
     </tr>
@@ -954,26 +964,31 @@ in flex and kalex.
       <td><code>yyleng</code></td>
       <td>-</td>
       <td>-</td>
+      <td>length of the match, use <code>length $yytext</code> instead</td>
     </tr>
     <tr>
       <td><code>yylex()</code></td>
       <td><code>yylex()</code></td>
       <td><code>$_[0]->yylex()</code></td>
+      <td><a href="#how-the-input-is-matched">return the next token from the input stream</a></td>
     </tr>
     <tr>
       <td><code>yymore()</code></td>
       <td><code>yymore()</code></td>
       <td><code>$_[0]->yymore()</code></td>
+      <td>append the next match to the current value of <a href="#yytext"><code>$yytext</code></a>
     </tr>
     <tr>
       <td><code>-</code></td>
       <td><code>yyrecompile()</code></td>
       <td><code>$_[0]->yyrecompile()</code></td>
+      <td>re-evaluate all <a href="#name-definitions">name definitions</a> and re-compile the patterns as needed</a>
     </tr>
     <tr>
       <td><code>yytext</code></td>
       <td><code>$yytext</code></td>
       <td><code>$_[0]->{yytext}</code></td>
+      <td>the currently matched input, possibly prepended by the previous value if <a href="#yymore">yymore()</a> had been called.
     </tr>
   <tbody>
 </table>
