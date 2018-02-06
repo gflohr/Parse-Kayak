@@ -553,7 +553,6 @@ sub __yylex {
     }
 
     my $method = $self->__yyvalidateStartCondition($self->{__yystate}->[-1]);
-$DB::single = 1;
     
     my ($token, $yytext) = $self->$method;
 
