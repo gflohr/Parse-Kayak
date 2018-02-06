@@ -55,8 +55,9 @@ Or from Perl:
       * [YYPUSH](#yypush)
       * [YYPOP](#yypop)
       * [REJECT](#reject)
-      * [$yytext](#yytext)
-      * [yymore](#yymore)
+      * [yymore()](#yymore)
+      * [yyless()](#yyless)
+      * [yyrecompile()](#yyrecompile)
    * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
       * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
       * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
@@ -847,12 +848,117 @@ purpose because you extract and unescape simultaneously.
 
 ## yyless()
 
+Use `$_[0]->yyless` in a [reentrant scanner](#reentrant-scanner).
+
+The function `yyless(n)` causes `$yytext` to be cut off at position
+`n`.  The chopped off part is prepended to the input and rescanned.
+
+```lex
+foobarbaz   ECHO; yyless(3); 
+[a-z]+      ECHO;
+```
+
+When the above scanner sees the string "foobarbaz" in the input,
+it first copies it to the output, then cuts of the last 6 characters
+from "barbaz" `$yytext` and prepends it to the input where it will
+be output again because of the second rule.
+
+A call of `yyless(0)` causes the entire match to be pushed back to
+the input.  This will result in an endless loop until you have changed
+the start condition or other matching parameters.
+
 ## yyrecompile()
 
 Use `$_[0]->yyrecompile` in a [reentrant scanner](#reentrant-scanner).
 
 [Name definitions](#name-definitions) are Perl variables (scalars) of the 
-same name that are lexically scoped to the lexing function [`yylex()`](#yylex).
+same name that are lexically scoped to the lexing function [`yylex()`](#yylex):
+
+```lex
+START_TAG <
+END_TAG   >
+%%
+${START_TAG}([a-z]+)${END_TAG}
+```
+
+The function `yylex() will contain code similar to this:
+
+```perl
+sub yylex() {
+    my $START_TAG = '<';
+    my $END_TAG = '>';
+
+    while (1) {
+        # Match the input ...
+    }
+}
+```
+
+You are free to assign to these variables in actions, but that will not
+change the regular expressions matched against.  You have to call
+`recompile()` in order to signal that change to kalex.
+
+A real-world example for that is the [Template
+Toolkit](http://www.template-toolkit.org/), a very popular template engine
+for Perl.  The Template Toolkit processes everything within the 
+tags `[% ... %]` as template code.
+
+But how can you write about templates in a template? The solution used
+by the template toolkit is very handy:
+
+```html
+<h1>[% title %]</h1>
+
+A condition can be written like this:
+
+[% TAGS [- -] %]
+<code>
+[% IF condition %]
+html code ....
+[% END %]
+</code>
+[- TAGS [% %] -]
+```
+
+The template directive `TAGS` changes the opening and closing delimiters
+to arbitrary strings.
+
+Switching between mini scanners with start conditions does not help here
+because the new delimiters are arbitrary, user-supplied strings.  What
+you need, is a *self-modifying* scannner;
+
+```lex
+WS [ \t]
+NWS [^ \t]
+OT \[\% 
+CT \%\]
+%%
+${OT}${WS}*TAGS${WS}+($NWS+)${WS}+($NWS+)${WS}*${CT} {
+            $OT = quotemeta $_[1];
+            $CT = quotemeta $_[2];
+            yyrecompile;
+        }
+${OT}(.*?)${CT}       yyprint "Template code: $_[1]\n";
+.|\n
+%%
+yylex;
+```
+
+The two [name definitions](#name-definitions) contain the initial
+delimiters.  If the scanner sees the template directive `TAGS` in the
+input stream, it takes the following two strings as the new delimiters.
+The call to `yyrecompile()` will make that change known to the scanner,
+so that the patterns get recompiled.
+
+This is less expensive than it sounds.  In reality, kalex creates a 
+fingerprint of the current set of name definitions and caches the
+compiled ruleset for that particular fingerprint.  That means that
+you pay the price for new variables only once.
+
+In the above example, the patterns are recompiled the first time the
+`TAGS` directive is used with two new delimiters.  If a certain set
+of delimiters had already been used, the ruleset is simply replaced with
+one from the cache.
 
 # FREQUENTLY ASKED QUESTIONS
 
