@@ -68,6 +68,12 @@ sub yymore {
     $yylexer->yymore;
 }
 
+sub yyless {
+    my ($pos) = @_;
+
+    $yylexer->yyless($pos);
+}
+
 sub yyrecompile {
     $yylexer->yyrecompile;
 }

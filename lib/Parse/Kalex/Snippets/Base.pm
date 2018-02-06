@@ -136,6 +136,19 @@ sub yymore {
     return $self;
 }
 
+sub yyless {
+    my ($self, $pos) = @_;
+
+$DB::single = 1;
+    # FIXME! Update location!
+    $pos ||= 0;
+    my $length = -$pos + length $self->{yytext};
+    my $cut = substr $self->{yytext}, $pos, $length, '';
+    $self->{yyinput} = $cut . $self->{yyinput};
+
+    return $self;
+}
+
 sub yyrecompile {
     my ($self) = @_;
 
