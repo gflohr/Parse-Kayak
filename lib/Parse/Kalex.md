@@ -799,6 +799,8 @@ Using `REJECT` in flex scanners is somewhat frowned upon because it slows
 down the entire scanner.  Kalex scanners work differently and you suffer
 from only a mostly negligible performance penalty.
 
+## $yytext
+
 ## yymore
 
 Use `$_[0]->yymore` in a [reentrant scanner](#reentrant-scanner).
@@ -904,6 +906,7 @@ in flex and kalex.
     <tr>
       <th rowspan="2">flex</th>
       <th colspan="2">kalex</th>
+      <th rowspan="2">Meaning</th>
     </tr>
     <tr>
       <th>non-reentrant</th>
@@ -915,26 +918,37 @@ in flex and kalex.
       <td><code>BEGIN</code></td>
       <td><code>YYBEGIN</code></td>
       <td><code>$_[0]->YYBEGIN</code></td>
+      <td>set <a href="#start-conditions">start condition</a></td>
     </tr>
     <tr>
       <td><code>ECHO</code></td>
       <td><code>ECHO</code></td>
       <td><code>$_[0]->ECHO</code></td>
+      <td>write <a href="#yytext">$yytext</a> to <a href="#yyout">$yyout</a>
     </tr>
     <tr>
       <td><code>REJECT</code></td>
       <td><code>REJECT</code></td>
       <td><code>$_[0]->REJECT</code></td>
+      <td>see <a href="REJECT">REJECT</a></td>
     </tr>
     <tr>
       <td>-</td>
-      <td><code>YYPUSH()</code></td>
+      <td><code>YYPOP()</code></td>
+      <td><code>$_[0]->YYPOP()</code></td>
+      <td>pop the last pushed <a href="#start-conditions">start condition</a> off the stack</td>
+    </tr>
+    <tr>
+      <td>-</td>
+      <td><code>YYPUSh()</code></td>
       <td><code>$_[0]->YYPUSH()</code></td>
+      <td>push a <a href="#start-conditions">start condition</a> on the stack</td>
     </tr>
     <tr>
       <td><code>yy_flex_debug</code></td>
       <td><code>$yy_kalex_debug</code></td>
       <td><code>$_[0]->{yy_kalex_debug}</code></td>
+      <td>enable <a href="#debugging">debugging</a></td>
     </tr>
     <tr>
       <td><code>yyleng</code></td>
@@ -950,6 +964,11 @@ in flex and kalex.
       <td><code>yymore()</code></td>
       <td><code>yymore()</code></td>
       <td><code>$_[0]->yymore()</code></td>
+    </tr>
+    <tr>
+      <td><code>-</code></td>
+      <td><code>yyrecompile()</code></td>
+      <td><code>$_[0]->yyrecompile()</code></td>
     </tr>
     <tr>
       <td><code>yytext</code></td>
