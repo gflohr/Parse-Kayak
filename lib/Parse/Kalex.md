@@ -43,6 +43,8 @@ Or from Perl:
       * [Interpolation](#interpolation)
       * [ANCHORS ("^" and "$")](#anchors-and)
       * [Multi-Line Patterns](#multi-line-patterns)
+      * [(?x:pattern)](#x-pattern)
+      * [(?n:pattern)](#n-pattern)
    * [HOW THE INPUT IS MATCHED](#how-the-input-is-matched)
       * [How It Really Works](#how-it-really-works)
          * [Captures](#captures)
@@ -58,6 +60,7 @@ Or from Perl:
       * [yymore()](#yymore)
       * [yyless()](#yyless)
       * [yyrecompile()](#yyrecompile)
+      * [unput()](#unput)
    * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
       * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
       * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
@@ -70,6 +73,7 @@ Or from Perl:
       * [Name Definitions Define Perl Variables](#name-definitions-define-perl-variables)
       * [REJECT is Less Expensive](#reject-is-less-expensive)
       * [Code Following REJECT is Allowed](#code-following-reject-is-allowed)
+      * [unput() Arguments Have Arbitrary Length](#unput-arguments-have-arbitrary-length)
    * [COPYRIGHT](#copyright)
    * [SEE ALSO](#see-also)
 
@@ -491,6 +495,20 @@ After the trailing delimiter, you can add all modifiers that Perl support.
 
 See `perldoc perlre` for more information.  Just imagine that instead of 
 `~PATTERN` you would have written `$variable =~ mPATTERN`.
+
+## (?x:pattern)
+
+The `x` flag is currently not recognized by kalex.  If you use it inside
+a regular [pattern](#pattern), the pattern will still end at the first
+whitespace character that is not escaped or outside of a character class.
+
+Inside [multi-line patterns](#multi-line-patterns) it works as expected.
+
+## (?n:pattern)
+
+The `n` modifier introduced in Perl 5.22 is currently not recognized.
+It will mess up the match counting and fixup of backreferences.  Do not
+use it!
 
 # HOW THE INPUT IS MATCHED
 
