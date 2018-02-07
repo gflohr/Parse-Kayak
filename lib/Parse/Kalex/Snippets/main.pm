@@ -84,6 +84,18 @@ sub unput {
     return $yylexer->unput($what);
 }
 
+sub input {
+    my ($num) = @_;
+
+    return $yylexer->yyinput($num);
+}
+
+sub yyinput {
+    my ($num) = @_;
+
+    return $yylexer->yyinput($num);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

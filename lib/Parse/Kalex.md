@@ -1004,6 +1004,31 @@ The following scanner will convert all Perl comments into C comments.
 .
 ```
 
+## input()/yyinput()
+
+Use `$_[0]->yyinput()` in a [reentrant scanner](#reentrant-scanner).
+
+The function `input()` moves the match pointer one character forward,
+in other words, that character is skipped in the input stream.  You can
+use `yyinput()` as an alias for `input()`.  [Reentrant 
+scanners](#reentrant-scanner) *only* support the method `yyinput()` but
+not `input()`.
+
+If you pass a positive integer as an argument, the pointer is forwarded
+that many characters at once.  An invalid number or 0 passed as an
+argument turns the call into a no-op.
+
+The function returns the portion of the input stream that was skipped.
+
+The following scanner will print out all backslash-escaped characters in
+the input:
+
+```lex
+%%
+\\       my $c = yyinput(1); yyprint "\\$c\n";
+.|\n
+```
+
 # FREQUENTLY ASKED QUESTIONS
 
 ## Quantifier Follows Nothing In Regex

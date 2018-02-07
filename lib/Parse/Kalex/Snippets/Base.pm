@@ -161,9 +161,24 @@ sub yyrecompile {
 sub unput {
     my ($self, $what) = @_;
 
+    # FIXME! Update location!
     substr $self->{yyinput}, $self->{yypos}, 0,  $what;
 
     return $self;
+}
+
+sub yyinput {
+    my ($self, $num) = @_;
+
+    $num = 1 if !defined $num;
+    return '' if $num <= 0;
+
+    my $skipped = substr $self->{yyinput}, $self->{yypos}, $num;
+
+    # FIXME! Update location!
+    $self->{yypos} += $num;
+
+    return $skipped;
 }
 
 sub __yyescape {
