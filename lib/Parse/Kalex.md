@@ -850,22 +850,27 @@ purpose because you extract and unescape simultaneously.
 
 Use `$_[0]->yyless` in a [reentrant scanner](#reentrant-scanner).
 
-The function `yyless(n)` causes `$yytext` to be cut off at position
-`n`.  The chopped off part is prepended to the input and rescanned.
+The function `yyless(n)` causes kalex to start the next match at
+the nth character of `$yytext`
 
 ```lex
 foobarbaz   ECHO; yyless(3); 
-[a-z]+      ECHO;
+[a-z]       ECHO;
 ```
 
 When the above scanner sees the string "foobarbaz" in the input,
-it first copies it to the output, then cuts of the last 6 characters
-from "barbaz" `$yytext` and prepends it to the input where it will
-be output again because of the second rule.
+it first copies it to the output, then moves [`$yypos`](#yypos)
+back 6 characters (9 characters length of [`$yytext`](#yypos)
+minus 3).
 
 A call of `yyless(0)` causes the entire match to be pushed back to
 the input.  This will result in an endless loop until you have changed
 the start condition or other matching parameters.
+
+There is no bounds checking for `n`.  If it is greater than the length
+of the current match, you continue matching *before* the last match.
+Likewise, a negative value of `n` will skip parts of the input
+altogether.
 
 ## yyrecompile()
 
@@ -967,18 +972,19 @@ definition should stand for a literal string!
 
 Use `$_[0]->unput()` in a [reentrant scanner](#reentrant-scanner).
 
-A call to `unput(STRING)` will prepend "STRING" to the input stream.
+A call to `unput(STRING)` will insert "STRING" into the input stream
+at the current matching position.  If your input stream is a variable
+(if [`$yyin`](#yyin) is a reference to a scalar) the variable the
+`$yyin` points to is modified!
 
 The following scanner will convert all Perl comments into C comments.
 
 ```lex
 %%
-#(.*)       unput(' */'); unput($yytext); unput('/* ');
+#(.*)       unput(' */'); unput($_[1]); unput('/* ');
 /\*.*?\*/   ECHO;
-.|\n
+.
 ```
-
-
 
 # FREQUENTLY ASKED QUESTIONS
 
