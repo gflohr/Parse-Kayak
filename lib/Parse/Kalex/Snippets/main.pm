@@ -78,6 +78,12 @@ sub yyrecompile {
     $yylexer->yyrecompile;
 }
 
+sub unput {
+    my ($what) = @_;
+
+    return $yylexer->unput($what);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

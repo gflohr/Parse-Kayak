@@ -894,9 +894,9 @@ sub yylex() {
 }
 ```
 
-You are free to assign to these variables in actions, but that will not
-change the regular expressions matched against.  You have to call
-`recompile()` in order to signal that change to kalex.
+You are free to assign to these variables in [actions](#actions), but 
+that will not change the regular expressions matched against.  You have 
+to call `recompile()` in order to signal that change to kalex.
 
 A real-world example for that is the [Template
 Toolkit](http://www.template-toolkit.org/), a very popular template engine
@@ -959,6 +959,26 @@ In the above example, the patterns are recompiled the first time the
 `TAGS` directive is used with two new delimiters.  If a certain set
 of delimiters had already been used, the ruleset is simply replaced with
 one from the cache.
+
+**Important**: Do not forget the call to `quotemeta`, when a name 
+definition should stand for a literal string!
+
+## unput()
+
+Use `$_[0]->unput()` in a [reentrant scanner](#reentrant-scanner).
+
+A call to `unput(STRING)` will prepend "STRING" to the input stream.
+
+The following scanner will convert all Perl comments into C comments.
+
+```lex
+%%
+#(.*)       unput(' */'); unput($yytext); unput('/* ');
+/\*.*?\*/   ECHO;
+.|\n
+```
+
+
 
 # FREQUENTLY ASKED QUESTIONS
 
@@ -1187,6 +1207,11 @@ action.
 
 Note however that calling REJECT multiple times within one action leads to
 an undefined scanner behavior.
+
+## unput() Arguments Have Arbitrary Length
+
+Flex scanners expect a single character as the argument to `unput()`.
+In kalex scanner actions you can unput strings of arbitrary length.
 
 # COPYRIGHT
 

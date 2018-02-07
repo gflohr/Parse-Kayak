@@ -136,18 +136,17 @@ sub yymore {
     return $self;
 }
 
+# FIXME! We have to use substr here!!!
 sub yyless {
     my ($self, $pos) = @_;
 
-    # FIXME! Update location!
-    $pos = 0 if $pos <= 0;
-    my $length = -$pos + length $self->{yytext};
-    my $cut = substr $self->{yytext}, $pos, $length, '';
-    $self->{yyinput} = $cut . $self->{yyinput};
+    $self->{yypos} += $pos - length $self->{yytext};
+    $self->{yypos} = 0 if $self->{yyps} < 0;
 
     return $self;
 }
 
+# FIXME! We have to use substr here!!!
 sub yyrecompile {
     my ($self) = @_;
 
@@ -155,6 +154,14 @@ sub yyrecompile {
     $self->{__yycanonical} = freeze $self->{__yyvariables};
 
     $self->__yycompileActivePatterns;
+
+    return $self;
+}
+
+sub unput {
+    my ($self, $what) = @_;
+
+    substr $self->{yyinput}, $self->{yypos}, 0,  $what;
 
     return $self;
 }
