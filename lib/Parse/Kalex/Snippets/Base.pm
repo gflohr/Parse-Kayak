@@ -26,6 +26,7 @@ sub new {
         yyoutname => '<stdout>',
         __yystate => [0],
         yy_kalex_debug => 1,
+        __yylocation => [1, 1, 1, 1],
     }, $class;
 
     # This will inject the following members:
@@ -136,7 +137,6 @@ sub yymore {
     return $self;
 }
 
-# FIXME! We have to use substr here!!!
 sub yyless {
     my ($self, $pos) = @_;
 
@@ -146,7 +146,6 @@ sub yyless {
     return $self;
 }
 
-# FIXME! We have to use substr here!!!
 sub yyrecompile {
     my ($self) = @_;
 
@@ -179,6 +178,12 @@ sub yyinput {
     $self->{yypos} += $num;
 
     return $skipped;
+}
+
+sub yylocation {
+    my ($self) = @_;
+
+    return wantarray ? @{$self->{__yylocation}} : $self->{__yylocation}->[0];
 }
 
 sub __yyescape {

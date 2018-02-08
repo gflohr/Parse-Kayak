@@ -56,8 +56,10 @@ sub checkOption {
     my %options = (
         yywrap => 1,
         debug => 0,
+        yylineno => 0,
     );
     my %voptions = (
+        package => 1,
     );
 
     if (exists $options{$option}) {
@@ -95,8 +97,7 @@ sub checkOption {
     }
 
     my $location = $self->{__lexer}->yylocation;
-    warn __x("{location}: error: option '{option}' does"
-             . " not take an argument.\n",
+    warn __x("{location}: error: unrecognized %option '{option}'.\n",
              location => $location, option => $option);
     ++$self->{__errors};
 
@@ -302,15 +303,13 @@ EOF
     $output .= $self->__writeYYLex(2 + $output =~ y/\n/\n/);
     $self->{__filename} = ''; # Invalidate cursor.
 
-    if (!defined $options->{package}) {
+    if (defined $options->{package}) {
+        $output .= "package $options->{package};\n\nno strict;\n\n";
+    } else {
         $output .= "package main;\n\nno strict;\n\n";
     }
 
     $output .= $self->__userCode;
-
-    if (defined $options->{package}) {
-        $output .= "\n1;\n";    
-    }
 
     return $output;
 }

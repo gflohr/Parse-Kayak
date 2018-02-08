@@ -25,7 +25,10 @@ sub compare_files;
 
 my $scannerdir = File::Spec->catfile('t', 'scanners');
 opendir my $dh, $scannerdir or die "$scannerdir: $!\n";
-my @scanners = map { s/\.l$//; $_ } grep { /\.l$/ } readdir $dh;
+my @scanners = map { s/\.l$//; $_ }
+               grep { /\.l$/ }
+               grep { /^[a-z]/ }
+               readdir $dh;
 
 foreach my $scanner (sort @scanners) {
     test_scanner $scanner;
@@ -66,7 +69,7 @@ sub compare_files {
     my $expect = join '', <$fh>;
 
     cmp_ok $got, 'eq', $expect, "$name output check";
-    
+   
     ok unlink $got_file;
 
     return 1;

@@ -593,7 +593,7 @@ sub scan {
 
     my $parser = Parse::Kalex::Parser->new;
     my %options;
-    foreach my $option (qw(debug)) {
+    foreach my $option (qw(debug package)) {
         if (exists $self->{__yyoptions}->{$option}) {
             $options{$option} = $self->{__yyoptions}->{$option};
         }
@@ -632,9 +632,10 @@ sub output {
         $self->__yyfatal(__("'\%option stdout' is mutually exclusive with"
                             . " the command-line option '--outfile'"));
     }
+
     if (!defined $options{outfile}) {
         $options{outfile} = defined $options{package}
-            ? $options{package} . '.pm' : 'lex.yy.pl';
+            ? 'lex.yy.pm' : 'lex.yy.pl';
     }
 
     my $encoding = $options{encoding};
@@ -694,6 +695,9 @@ sub __getOptions {
 
         # Scanner behavior
         'e|encoding=s' => \$options{encoding},
+
+        # Generated code
+        'p|package=s' => \$options{package},
 
         # Informative output.
         'h|help' => \$options{help},
@@ -769,7 +773,7 @@ Debugging:
 EOF
 
     print __(<<EOF);
-  -d, --debug                  enable debug mode in scanner
+  -d, --debug                 enable debug mode in scanner
 EOF
 
     print "\n";
@@ -779,11 +783,11 @@ Files:
 EOF
 
     print __(<<EOF);
-  -o, --outfile=OUTFILE        write scanner to OUTFILE instead of lex.yy.pl
+  -o, --outfile=OUTFILE       write scanner to OUTFILE instead of lex.yy.pl
 EOF
 
     print __(<<EOF);
-  -t, --stdout                 write scanner to standard output
+  -t, --stdout                write scanner to standard output
 EOF
 
     print "\n";
@@ -793,7 +797,17 @@ Scanner behavior:
 EOF
 
     print __(<<EOF);
-  -e, --encoding=ENOCDING      encoding of input files, default 'UTF-8'
+  -e, --encoding=ENOCDING     encoding of input files, default 'UTF-8'
+EOF
+
+    print "\n";
+
+    print __(<<EOF);
+Generated code:
+EOF
+
+    print __(<<EOF);
+  -p, --package=PACKAGE       generate reentrant scanner in package PACKAGE
 EOF
 
     print "\n";
