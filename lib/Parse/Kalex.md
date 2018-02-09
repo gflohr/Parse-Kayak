@@ -890,6 +890,8 @@ of the current match, you continue matching *before* the last match.
 Likewise, a negative value of `n` will skip parts of the input
 altogether.
 
+Note that [`$yytext`](#yytext) gets updated accordingly.
+
 ## yyrecompile()
 
 Use `$_[0]->yyrecompile` in a [reentrant scanner](#reentrant-scanner).

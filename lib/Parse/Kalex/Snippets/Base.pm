@@ -140,8 +140,17 @@ sub yymore {
 sub yyless {
     my ($self, $pos) = @_;
 
-    $self->{yypos} += $pos - length $self->{yytext};
-    $self->{yypos} = 0 if $self->{yyps} < 0;
+    my $length = length $self->{__yytext};
+    if ($pos < 0) {
+        require Carp;
+        Carp::croak("yyless() called with negative argument $pos");
+    }
+
+    # FIXME! Update yylocation!
+    $self->{yypos} -= $length;
+    $self->{yytext} = $self->{__yytext}
+        = substr $self->{yyinput}, $self->{yypos}, $pos;
+    $self->{yypos} += $pos;
 
     return $self;
 }

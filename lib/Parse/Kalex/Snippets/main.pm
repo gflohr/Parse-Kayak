@@ -71,6 +71,11 @@ sub yymore {
 sub yyless {
     my ($pos) = @_;
 
+    if ($pos < 0) {
+        require Carp;
+        Carp::croak("yyless() called with negative argument $pos");
+    }
+
     $yylexer->yyless($pos);
 }
 
