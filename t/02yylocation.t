@@ -32,6 +32,8 @@ is $lexer->yylex, 3, 'yylex #3';
 assert_location $lexer, appellantur => 2, 65, 3, 0;
 is $lexer->yylex, 4, 'yylex #4';
 assert_location $lexer, legibus => 3, 30, 3, 42;
+is $lexer->yylex, 5, 'yylex #5';
+assert_location $lexer, legibus => 3, 58, 3, 59;
 
 done_testing;
 

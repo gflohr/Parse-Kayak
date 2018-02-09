@@ -154,13 +154,18 @@ sub yyless {
 
     if ($self->{__yyoptions}->{yylineno}) {
         if ($pos > $length) {
+            # Moving the match pointer forward is not the intended use case
+            # but it is simple to handle.
             my @location = @{$self->{__yylocation}};
             my $added = substr $self->{__yytext}, $length, $pos - $length;
             $self->__yyupdateLocation($added);
             $self->{__yylocation}->[0] = $location[0];
             $self->{__yylocation}->[1] = $location[1];
         } elsif ($pos < $length) {
-
+            my $rescan = substr $self->{yyinput}, $self->{yypos}, $length - $pos;
+            my $yylocation = $self->{__yylocation};
+            $yylocation->[3] -= length $rescan;
+            warn "does not work with newlines";
         }
     }
 
