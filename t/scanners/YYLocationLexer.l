@@ -1,5 +1,3 @@
 %option yylineno
 %%
-.|\n
-%%
-$self->{yyin} = 't/scanners/YYLocationLexer.in';
+est                     return 1;

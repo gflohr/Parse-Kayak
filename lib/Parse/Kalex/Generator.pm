@@ -303,13 +303,18 @@ EOF
     $output .= $self->__writeYYLex(2 + $output =~ y/\n/\n/);
     $self->{__filename} = ''; # Invalidate cursor.
 
-    if (defined $options->{package}) {
-        $output .= "package $options->{package};\n\nno strict;\n\n";
-    } else {
-        $output .= "package main;\n\nno strict;\n\n";
-    }
+    my $user_code = $self->__userCode;
 
-    $output .= $self->__userCode;
+    if (length $user_code) {
+        if (defined $options->{package}) {
+            $output .= "package $options->{package};\n\nno strict;\n\n";
+        } else {
+            $output .= "package main;\n\nno strict;\n\n";
+        }
+        $output .= $user_code;
+    } elsif ($options->{package}) {
+        $output .= "\n1;\n";
+    }
 
     return $output;
 }

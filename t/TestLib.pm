@@ -30,12 +30,13 @@ sub create_lexer {
                                      package => $name}, $lfile);
     ok $scanner, "$name new";
     ok $scanner->scan, "$name scan";
-    ok $scanner->output;
+    ok $scanner->output, "$name output";
     ok -e $scanner_file, "$name -> $scanner_file";
     ok require $scanner_file, "$name -> require $scanner_file";
+    ok((unlink $scanner_file), "$name -> unlink $scanner_file");
 
     my $lexer = $name->new;
-    ok $lexer;
+    ok $lexer, "$name constructor";
 
     return $lexer;
 }
