@@ -96,6 +96,12 @@ sub yyinput {
     return $yylexer->yyinput($num);
 }
 
+sub yyrestart {
+    my ($yyin) = @_;
+
+    return $yylexer->yyrestart($yyin);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

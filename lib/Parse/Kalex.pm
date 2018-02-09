@@ -695,6 +695,7 @@ sub __getOptions {
 
         # Scanner behavior
         'e|encoding=s' => \$options{encoding},
+        'yylineno' => \$options{yylineno},
 
         # Generated code
         'p|package=s' => \$options{package},
@@ -801,6 +802,10 @@ EOF
 
     print __(<<EOF);
   -e, --encoding=ENOCDING     encoding of input files, default 'UTF-8'
+EOF
+
+    print __(<<EOF);
+      --yylineno              track line count in yylineno
 EOF
 
     print "\n";

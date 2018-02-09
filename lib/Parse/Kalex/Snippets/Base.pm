@@ -17,7 +17,7 @@ use Scalar::Util qw(blessed reftype);
 use Storable qw(freeze);
 
 sub new {
-    my ($class, %options) = @_;
+    my ($class) = @_;
 
     my $self = bless {
         yyin => \*STDIN,
@@ -26,7 +26,7 @@ sub new {
         yyoutname => '<stdout>',
         __yystate => [0],
         yy_kalex_debug => 1,
-        __yylocation => [1, 1, 1, 1],
+        __yylocation => [1, 0, 1, 0],
     }, $class;
 
     # This will inject the following members:
@@ -186,6 +186,16 @@ sub yylocation {
     return wantarray ? @{$self->{__yylocation}} : $self->{__yylocation}->[0];
 }
 
+sub yyrestart {
+    my ($self, $yyin) = @_;
+
+    $self->{$yyin} = $yyin;
+    $self->{yyinput} = '';
+    $self->{yypos} = 0;
+
+    return $self;
+}
+
 sub __yyescape {
     my ($self, $string) = @_;
 
@@ -230,6 +240,25 @@ sub __yymatch {
                 . " line " . $rule->[4]->[1];
             ++$ruleno;
             print STDERR qq{<$condition> accepting rule #$ruleno at $location ("$pretty_match")\n};
+        }
+    }
+
+    if ($self->{__yyoptions}->{yylineno}) {
+        my $loc = $self->{__yylocation};
+        @{$loc}[0, 1] = @{$loc}[2, 3];
+        ++$loc->[1];
+
+        my $newlines = $match =~ y/\n/\n/;
+        if ($newlines) {
+            $loc->[2] += $newlines;
+            my $rindex = rindex $match, "\n";
+            if (0 == $rindex) {
+                $loc->[0] = 0;
+                ++$loc->[1];
+            }
+            $loc->[3] = -1 - $rindex + length $match;
+        } else {
+            $loc->[3] = -1 + $loc->[1] + length $match;
         }
     }
 

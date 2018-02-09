@@ -23,10 +23,13 @@ sub assert_location;
 
 my $lexer = create_lexer 'YYLocationLexer';
 $lexer->{yyin} = 't/scanners/YYLocationLexer.in';
-assert_location $lexer, initial => 1, 1, 1, 1;
+assert_location $lexer, initial => 1, 0, 1, 0;
 is $lexer->yylex, 1, "yylex #1";
+assert_location $lexer, est => 1, 8, 1, 10;
 is $lexer->yylex, 2, "yylex #2";
+assert_location $lexer, Belgae => 1, 62, 2, 5;
 is $lexer->yylex, 3, "yylex #3";
+assert_location $lexer, appellantur => 2, 65, 3, 0;
 
 done_testing;
 
