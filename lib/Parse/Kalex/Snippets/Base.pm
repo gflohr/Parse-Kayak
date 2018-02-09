@@ -164,8 +164,13 @@ sub yyless {
         } elsif ($pos < $length) {
             my $rescan = substr $self->{yyinput}, $self->{yypos}, $length - $pos;
             my $yylocation = $self->{__yylocation};
-            $yylocation->[3] -= length $rescan;
-            warn "does not work with newlines";
+
+            my $newlines = $rescan =~ y/\n/\n/;
+            if ($newlines) {
+                warn "does not work with newlines";
+            } else {
+                $yylocation->[3] -= length $rescan;
+            }
         }
     }
 
