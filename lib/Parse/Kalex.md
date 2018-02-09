@@ -1081,6 +1081,20 @@ YYRULE3: $self->ECHO;; next;
 The misplaced comment is misinterpreted as a pattern match, and that match
 often ends at path references in the source file.
 
+## Can't Use String ("...") As a Hashref
+
+When creating a [reentrant scanner](#reentrant-scanner), you have to call
+*methods*, not *functions* from [actions](#actions):
+
+```lex
+%%
+    /* Wrong!  */
+foo                      yyless(1);
+    /* Right!  */
+bar                      $_[0]->yyless(1)
+
+```
+
 # DIFFERENCES TO FLEX
 
 ## Functions and Variables

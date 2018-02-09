@@ -152,6 +152,18 @@ sub yyless {
         = substr $self->{yyinput}, $self->{yypos}, $pos;
     $self->{yypos} += $pos;
 
+    if ($self->{__yyoptions}->{yylineno}) {
+        if ($pos > $length) {
+            my @location = @{$self->{__yylocation}};
+            my $added = substr $self->{__yytext}, $length, $pos - $length;
+            $self->__yyupdateLocation($added);
+            $self->{__yylocation}->[0] = $location[0];
+            $self->{__yylocation}->[1] = $location[1];
+        } elsif ($pos < $length) {
+
+        }
+    }
+
     return $self;
 }
 
@@ -232,6 +244,29 @@ sub __yyescape {
     return $string;
 }
 
+sub __yyupdateLocation {
+    my ($self, $match) = @_;
+
+    my $loc = $self->{__yylocation};
+    @{$loc}[0, 1] = @{$loc}[2, 3];
+    ++$loc->[1];
+
+    my $newlines = $match =~ y/\n/\n/;
+    if ($newlines) {
+        $loc->[2] += $newlines;
+        my $rindex = rindex $match, "\n";
+        if (0 == $rindex) {
+            $loc->[0] = 0;
+            ++$loc->[1];
+        }
+        $loc->[3] = -1 - $rindex + length $match;
+    } else {
+        $loc->[3] = -1 + $loc->[1] + length $match;
+    }
+
+    return $self;
+}
+
 sub __yymatch {
     my ($self, $match) = @_;
 
@@ -252,25 +287,7 @@ sub __yymatch {
         }
     }
 
-    if ($self->{__yyoptions}->{yylineno}) {
-        my $loc = $self->{__yylocation};
-        @{$loc}[0, 1] = @{$loc}[2, 3];
-        ++$loc->[1];
-
-        my $newlines = $match =~ y/\n/\n/;
-        if ($newlines) {
-            $loc->[2] += $newlines;
-            my $rindex = rindex $match, "\n";
-            if (0 == $rindex) {
-                $loc->[0] = 0;
-                ++$loc->[1];
-            }
-            $loc->[3] = -1 - $rindex + length $match;
-        } else {
-            $loc->[3] = -1 + $loc->[1] + length $match;
-        }
-    }
-
+    $self->__yyupdateLocation($match) if ($self->{__yyoptions}->{yylineno});
     $self->{__yytext} = $match;
     $self->{yypos} += length $match;
 
