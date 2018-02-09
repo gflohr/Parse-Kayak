@@ -472,7 +472,7 @@ EOF
             $action .= "\n        ; next;";
         }
 
-        $output .= qq{"#line $location->[1] "$location->[0]"}
+        $output .= qq{#line $location->[1] "$location->[0]"\n}
              if $self->{__options}->{line};
         $output .= "YYRULE$ruleno: $action\n\n";
         ++$ruleno;
