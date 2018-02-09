@@ -593,7 +593,7 @@ sub scan {
 
     my $parser = Parse::Kalex::Parser->new;
     my %options;
-    foreach my $option (qw(debug package)) {
+    foreach my $option (qw(debug package line)) {
         if (exists $self->{__yyoptions}->{$option}) {
             $options{$option} = $self->{__yyoptions}->{$option};
         }
@@ -698,11 +698,14 @@ sub __getOptions {
 
         # Generated code
         'p|package=s' => \$options{package},
+        'L|noline' => \$options{noline},
 
         # Informative output.
         'h|help' => \$options{help},
         'V|version' => \$options{version},
     );
+    $options{line} = !$options{noline};
+    delete $options{noline};
 
     if ($options{encoding} =~ /[\\\)]/) {
         $self->__yyfatal(__x("invalid encoding '{encoding}'!",
@@ -808,6 +811,10 @@ EOF
 
     print __(<<EOF);
   -p, --package=PACKAGE       generate reentrant scanner in package PACKAGE
+EOF
+
+    print __(<<EOF);
+  -L, --noline                suppress #line directives in scanner
 EOF
 
     print "\n";

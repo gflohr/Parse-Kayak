@@ -57,6 +57,7 @@ sub checkOption {
         yywrap => 1,
         debug => 0,
         yylineno => 0,
+        line => 1,
     );
     my %voptions = (
         package => 1,
@@ -334,7 +335,8 @@ sub __writeInit {
     my ($self, $offset) = @_;
 
     my $filename = $self->{__lexer}->outputFilename;
-    my $output = qq{#line $offset "$filename"\n};
+    my $output = '';
+    $output .= qq{#line $offset "$filename"\n} if $self->{__options}->{line};
 
     $output .= <<'EOF';
 sub __yyinit {
@@ -392,7 +394,8 @@ sub __writeYYLex {
     my ($self, $offset) = @_;
 
     my $filename = $self->{__lexer}->outputFilename;
-    my $output = qq{#line $offset "$filename"\n};
+    my $output = '';
+    $output .= qq{#line $offset "$filename"\n} if $self->{__options}->{line};
 
     if (defined $self->{__options}->{package}) {
         $output .= <<'EOF';
@@ -469,11 +472,9 @@ EOF
             $action .= "\n        ; next;";
         }
 
-        $output .= <<EOF;
-#line $location->[1] "$location->[0]"
-YYRULE$ruleno: $action
-
-EOF
+        $output .= qq{"#line $location->[1] "$location->[0]"}
+             if $self->{__options}->{line};
+        $output .= "YYRULE$ruleno: $action\n\n";
         ++$ruleno;
     }
 
@@ -541,7 +542,8 @@ sub __addLocation {
 
     my $location = '';
     if ($filename ne $self->{__filename} || $lineno != $self->{__lineno}) {
-        $location = qq{#line $lineno "$filename"\n};
+        $location = qq{#line $lineno "$filename"\n}
+            if $self->{__options}->{line};
     } 
     $self->{__filename} = $filename;
     $self->{__lineno} = $lineno + ($snippet =~ y/\n/\n/);
@@ -572,7 +574,7 @@ sub __readModuleCode {
             ++$discarded;
             last if $line =~ /^package/;
         }
-        $code .= qq{#line $discarded "$module"\n};
+        $code .= qq{#line $discarded "$module"\n} if $self->{__options}->{line};
 
         while (defined(my $line = $fh->getline)) {
             last if $line =~ /^1;/;
