@@ -48,6 +48,10 @@ is $lexer->yylex, 11, 'yylex #11';
 assert_location $lexer, propterea_quod => 5, 14, 5, 27;
 is $lexer->yylex, 12, 'yylex #12';
 assert_location $lexer, propterea => 5, 14, 5, 22;
+is $lexer->yylex, 13, 'yylex #13';
+assert_location $lexer, humanitate => 5, 43, 5, 52;
+is $lexer->yylex, 14, 'yylex #14';
+assert_location $lexer, minimeque => 6, 9, 6, 17;
 
 done_testing;
 

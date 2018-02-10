@@ -211,6 +211,7 @@ sub yyinput {
     return '' if $num <= 0;
 
     my $skipped = substr $self->{yyinput}, $self->{yypos}, $num;
+    $self->{__yyskipped} .= $skipped;
 
     # FIXME! Update location!
     $self->{yypos} += $num;
@@ -320,7 +321,15 @@ sub __yymatch {
         }
     }
 
-    $self->__yyupdateLocation($match) if ($self->{__yyoptions}->{yylineno});
+    if ($self->{__yyoptions}->{yylineno}) {
+        $DB::single = 1 if $self->{__yyskipped};
+        # Make up leeway possibly missed location moves.
+        $self->__yyupdateLocation($self->{__yyskipped})
+            if length $self->{__yyskipped};
+        $self->__yyupdateLocation($match);
+    }
+    delete $self->{__yyskipped};
+
     $self->{__yytext} = $match;
     $self->{yypos} += length $match;
 
