@@ -146,7 +146,6 @@ sub yyless {
         Carp::croak("yyless() called with negative argument $pos");
     }
 
-    # FIXME! Update yylocation!
     $self->{yypos} -= $length;
     $self->{yytext} = $self->{__yytext}
         = substr $self->{yyinput}, $self->{yypos}, $pos;
@@ -266,14 +265,18 @@ sub __yyupdateLocation {
     my ($self, $match) = @_;
 
     my $loc = $self->{__yylocation};
-    @{$loc}[0, 1] = @{$loc}[2, 3];
-    ++$loc->[1];
+    if (!$self->{__yymore}) {
+        @{$loc}[0, 1] = @{$loc}[2, 3];
+        ++$loc->[1];
+    } else {
+        $match = $self->{__yytext} . $match;
+    }
 
     my $newlines = $match =~ y/\n/\n/;
     if ($newlines) {
         $loc->[2] += $newlines;
         my $rindex = rindex $match, "\n";
-        if (0 == $rindex) {
+        if (0 == $rindex && !$self->{__yymore}) {
             $loc->[0] = 0;
             ++$loc->[1];
         }

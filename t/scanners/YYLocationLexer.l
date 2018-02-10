@@ -7,4 +7,6 @@ appellantur\.\n         return 3;
 legibus                 $_[0]->yyless(13); return 4;
 Gallos                  $_[0]->yyless(2); return 5;
 Aquitanis\nGarumna      $_[0]->yyless(4); return 6;
+Matrona[ ]et[ ]         $_[0]->yymore; return 7;
+Sequana                 return 8;
 .|\n
