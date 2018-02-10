@@ -15,4 +15,5 @@ propterea[ ]quod        $_[0]->REJECT; return 11;
 propterea               return 12;
 humanitate              $_[0]->yyinput(10); $_[0]->yyinput(15); return 13;
 minimeque               return 14;
+mercatores              return 15;
 .|\n
