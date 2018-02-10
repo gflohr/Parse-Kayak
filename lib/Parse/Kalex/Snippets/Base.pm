@@ -274,7 +274,7 @@ sub __yyupdateLocation {
 
     my $newlines = $match =~ y/\n/\n/;
     if ($newlines) {
-        $loc->[2] += $newlines;
+        $loc->[2] = $loc->[0] + $newlines;
         my $rindex = rindex $match, "\n";
         if (0 == $rindex && !$self->{__yymore}) {
             $loc->[0] = 0;

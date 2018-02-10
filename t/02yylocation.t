@@ -40,6 +40,10 @@ is $lexer->yylex, 7, 'yylex #7';
 assert_location $lexer, Matrona => 4, 26, 4, 36;
 is $lexer->yylex, 8, 'yylex #8';
 assert_location $lexer, Sequana => 4, 26, 4, 43;
+is $lexer->yylex, 9, 'yylex #9';
+assert_location $lexer, fortissimi => 4, 67, 5, 0;
+is $lexer->yylex, 10, 'yylex #10';
+assert_location $lexer, sunt_Belgae => 4, 67, 5, 11;
 
 done_testing;
 
