@@ -86,7 +86,13 @@ sub yyrecompile {
 sub unput {
     my ($what) = @_;
 
-    return $yylexer->unput($what);
+    return $yylexer->yyunput($what);
+}
+
+sub yyunput {
+    my ($what) = @_;
+
+    return $yylexer->yyunput($what);
 }
 
 sub input {

@@ -54,6 +54,8 @@ is $lexer->yylex, 14, 'yylex #14';
 assert_location $lexer, minimeque => 6, 9, 6, 17;
 is $lexer->yylex, 15, 'yylex #15';
 assert_location $lexer, mercatores => 6, 26, 6, 35;
+is $lexer->yylex, 16, 'yylex #16';
+assert_location $lexer, catchme => 5, 0, 6, 41;
 
 done_testing;
 

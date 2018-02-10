@@ -195,10 +195,22 @@ sub yyrecompile {
     return $self;
 }
 
-sub unput {
+sub yyunput {
     my ($self, $what) = @_;
 
-    # FIXME! Update location!
+    if ($self->{__yyoptions}->{yylineno}) {
+        $self->{__yyadded} = $what . $self->{__yyadded};
+        my $lin = length $self->{__yyskipped};
+        my $lun = length $self->{__yyadded};
+        if ($lin >= $lun) {
+            substr $self->{__yyskipped}, -$lun, $lun, '';
+            delete $self->{__yyadded};
+        } else {
+            substr $self->{__yyadded}, -$lin, $lin, '';
+            delete $self->{__yyskipped};
+        }
+    }
+
     substr $self->{yyinput}, $self->{yypos}, 0,  $what;
 
     return $self;
@@ -211,7 +223,19 @@ sub yyinput {
     return '' if $num <= 0;
 
     my $skipped = substr $self->{yyinput}, $self->{yypos}, $num;
-    $self->{__yyskipped} .= $skipped;
+
+    if ($self->{__yyoptions}->{yylineno}) {
+        $self->{__yyskipped} .= $skipped;
+        my $lin = length $self->{__yyskipped};
+        my $lun = length $self->{__yyadded};
+        if ($lin >= $lun) {
+            substr $self->{__yyskipped}, -$lun, $lun, '';
+            delete $self->{__yyadded};
+        } else {
+            substr $self->{__yyadded}, -$lin, $lin, '';
+            delete $self->{__yyskipped};
+        }
+    }
 
     # FIXME! Update location!
     $self->{yypos} += $num;
@@ -322,13 +346,13 @@ sub __yymatch {
     }
 
     if ($self->{__yyoptions}->{yylineno}) {
-        $DB::single = 1 if $self->{__yyskipped};
         # Make up leeway possibly missed location moves.
-        $self->__yyupdateLocation($self->{__yyskipped})
-            if length $self->{__yyskipped};
+        if (length $self->{__yyskipped}) {
+            $self->__yyupdateLocation($self->{__yyskipped});
+            delete $self->{__yyskipped};
+        }
         $self->__yyupdateLocation($match);
     }
-    delete $self->{__yyskipped};
 
     $self->{__yytext} = $match;
     $self->{yypos} += length $match;
