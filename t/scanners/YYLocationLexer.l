@@ -11,4 +11,6 @@ Matrona[ ]et[ ]         $_[0]->yymore; return 7;
 Sequana                 return 8;
 fortissimi\n            $_[0]->yymore; return 9;
 sunt[ ]Belgae           return 10;
+propterea[ ]quod        $_[0]->REJECT; return 11;
+propterea               return 12;
 .|\n

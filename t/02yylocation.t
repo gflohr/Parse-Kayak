@@ -44,6 +44,10 @@ is $lexer->yylex, 9, 'yylex #9';
 assert_location $lexer, fortissimi => 4, 67, 5, 0;
 is $lexer->yylex, 10, 'yylex #10';
 assert_location $lexer, sunt_Belgae => 4, 67, 5, 11;
+is $lexer->yylex, 11, 'yylex #11';
+assert_location $lexer, propterea_quod => 5, 14, 5, 27;
+is $lexer->yylex, 12, 'yylex #12';
+assert_location $lexer, propterea => 5, 14, 5, 22;
 
 done_testing;
 

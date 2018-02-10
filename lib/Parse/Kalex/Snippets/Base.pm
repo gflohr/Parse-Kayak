@@ -264,6 +264,18 @@ sub __yyescape {
 sub __yyupdateLocation {
     my ($self, $match) = @_;
 
+    # Remember old location in case REJECT is called.  Calling REJECT multiple
+    # times in an action is an error and messes the scanner up.  If we had
+    # rejected the last rule, restore the location to what it was before.
+    #
+    # We have to check __yyrejected and not __yyreject_valid.  The latter has
+    # already been reset by __yypattern().
+    if ($self->{__yyrejected}) {
+        $self->{__yylocation} = [@{$self->{__yyoldlocation}}];        
+    } else {
+        $self->{__yyoldlocation} = [@{$self->{__yylocation}}];
+    }
+
     my $loc = $self->{__yylocation};
     if (!$self->{__yymore}) {
         @{$loc}[0, 1] = @{$loc}[2, 3];
