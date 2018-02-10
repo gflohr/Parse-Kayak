@@ -1,6 +1,6 @@
 %option yylineno
 %%
-est                     return 1;
+omnis                   return 1;
 Belgae,\naliam          return 2;
 appellantur\.\n         return 3;
     /* That will move yypos forward!  */

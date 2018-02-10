@@ -25,7 +25,7 @@ my $lexer = create_lexer 'YYLocationLexer';
 $lexer->{yyin} = 't/scanners/YYLocationLexer.in';
 assert_location $lexer, initial => 1, 0, 1, 0;
 is $lexer->yylex, 1, 'yylex #1';
-assert_location $lexer, est => 1, 8, 1, 10;
+assert_location $lexer, omnis => 1, 12, 1, 16;
 is $lexer->yylex, 2, 'yylex #2';
 assert_location $lexer, Belgae => 1, 62, 2, 5;
 is $lexer->yylex, 3, 'yylex #3';
