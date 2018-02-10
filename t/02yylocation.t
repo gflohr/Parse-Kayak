@@ -33,7 +33,9 @@ assert_location $lexer, appellantur => 2, 65, 3, 0;
 is $lexer->yylex, 4, 'yylex #4';
 assert_location $lexer, legibus => 3, 30, 3, 42;
 is $lexer->yylex, 5, 'yylex #5';
-assert_location $lexer, legibus => 3, 58, 3, 59;
+assert_location $lexer, Gallos => 3, 58, 3, 59;
+is $lexer->yylex, 6, 'yylex #6';
+assert_location $lexer, Aquitanis => 3, 68, 3, 71;
 
 done_testing;
 
@@ -45,6 +47,6 @@ sub assert_location {
      
     is $location[0], $expect[0], "$name $test from_line";
     is $location[1], $expect[1], "$name $test from_column";
-    is $location[2], $expect[2], "$name $test toline";
+    is $location[2], $expect[2], "$name $test to_line";
     is $location[3], $expect[3], "$name $test to_column";
 }

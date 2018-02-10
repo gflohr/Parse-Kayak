@@ -162,14 +162,22 @@ sub yyless {
             $self->{__yylocation}->[0] = $location[0];
             $self->{__yylocation}->[1] = $location[1];
         } elsif ($pos < $length) {
-            my $rescan = substr $self->{yyinput}, $self->{yypos}, $length - $pos;
-            my $yylocation = $self->{__yylocation};
+            # Again, the start of the match has not changed.
+            my $loc = $self->{__yylocation};
+            my $match = $self->{__yytext};
 
-            my $newlines = $rescan =~ y/\n/\n/;
+            my $newlines = $match =~ y/\n/\n/;
             if ($newlines) {
-                warn "does not work with newlines";
+                $loc->[2] = $loc->[0] + $newlines;
+                my $rindex = rindex $match, "\n";
+                if (0 == $rindex) {
+                    $loc->[0] = 0;
+                    ++$loc->[1];
+                }
+                $loc->[3] = -1 - $rindex + length $match;
             } else {
-                $yylocation->[3] -= length $rescan;
+                $loc->[2] = $loc->[0];
+                $loc->[3] = -1 + $loc->[1] + length $match;
             }
         }
     }
