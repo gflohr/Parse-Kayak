@@ -190,7 +190,6 @@ sub yyless {
             }
         }
 
-        die $self->{__yyunread};
     }
 
     return $self;
@@ -280,7 +279,7 @@ sub __yyescape {
 # instance variable__yyunread.
 #
 # Normally, __yyunread is the difference between the length of yyinput and
-# __yypos.  REJECT, yymore(), yyless(), and yyinput() correct it accordingly.
+# yypos.  REJECT, yymore(), yyless(), and yyinput() correct it accordingly.
 # Only yyunput(), which inserts chharacters does *not* update it so that 
 # we can see that we are currently matching user-supplied input, at least
 # partially.  During that time, the location does not get updated so that it
@@ -293,7 +292,7 @@ sub __yyupdateLocation {
     my @loc;
     if (-$self->{yypos} + $lyyinput <= $self->{__yyunread} - $lmatch) {
         # Normal case.
-        $self->{__yyunread} = $lyyinput - $self->{__yypos};
+        $self->{__yyunread} = $lyyinput - $self->{yypos};
 
         if ($self->{__yymore}) {
             # Do not move start of the location.
@@ -307,7 +306,7 @@ sub __yyupdateLocation {
         }
     } elsif (-$self->{yypos} + $lyyinput > $self->{__yyunread}) {
         # The first part of the match comes from yyunput().
-        $self->{__yyunread} = $lyyinput - $self->{__yypos};
+        $self->{__yyunread} = $lyyinput - $self->{yypos};
     } else {
         # Leave location untouchhed.
         return $self;
@@ -323,6 +322,7 @@ sub __yyupdateLocation {
         }
         $loc[3] = -1 - $rindex + $lmatch;
     } else {
+        $loc[2] = $loc[0];
         $loc[3] = -1 + $loc[1] + $lmatch;
     }
 
@@ -352,12 +352,10 @@ sub __yymatch {
         }
     }
 
-    if ($self->{__yyoptions}->{yylineno}) {
-        $self->__yyupdateLocation($match);
-    }
-
     $self->{__yytext} = $match;
     $self->{yypos} += length $match;
+
+    $self->__yyupdateLocation($match) if $self->{__yyoptions}->{yylineno};
 
     if (delete $self->{__yymore}) {
         $self->{yytext} .= $match;
@@ -394,7 +392,7 @@ sub __yywrap {
         $self->{yypos} = 0;
         if ($self->{__yyoptions}->{yylineno}) {
             $self->{__yylocation} = [1, 0, 1, 0];
-            $self->{__yyseen} = length $self->{yyinput};
+            $self->{__yyunread} = length $self->{yyinput};
         }
     }
 
@@ -409,7 +407,7 @@ sub __yywrap {
         $self->{yypos} = 0;
         if ($self->{__yyoptions}->{yylineno}) {
             $self->{__yylocation} = [1, 0, 1, 0];
-            $self->{__yyseen} = length $self->{yyinput};
+            $self->{__yyunread} = length $self->{yyinput};
         }
     }
 
