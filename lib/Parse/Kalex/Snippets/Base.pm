@@ -150,6 +150,7 @@ sub yymore {
 sub yyless {
     my ($self, $pos) = @_;
 
+$DB::single = 1;
     my $length = length $self->{__yytext};
     if ($pos < 0) {
         require Carp;
@@ -169,14 +170,15 @@ sub yyless {
         my @location = @{$self->{__yylocation}};
         my @last = @{$self->{__yylastlocation}};
         if ($location[2] == $last[0] && $location[3] == $last[1]) {
-            $last[0] = $location[2];
-            $last[1] = $location[3];
-            $self->{__yyunread} = -$self->{yypos} + length $self->{yyinput};
+            $last[0] = $location[0];
+            $last[1] = $location[1] - 1;
+            $self->{__yylastlocation} = \@last;
+
+            $self->{__yyunread} = $pos - $self->{yypos} 
+                                  + length $self->{yyinput};
         }
         
-        my @old_loc = @{$self->{__yylocation}};
-        my $new_match = substr $self->{yyinput}, $self->{yypos} - $length,
-                               $length;
+        my $new_match = substr $self->{yyinput}, $self->{yypos} - $pos, $pos;
         $self->__yyupdateLocation($new_match);
     }
 
@@ -278,7 +280,7 @@ sub __yyupdateLocation {
     my $lyyinput = length $self->{yyinput};  # 15
     my $lmatch = length $match;  # 4
     my @loc;
-    if (-$self->{yypos} + $lyyinput <= $self->{__yyunread} - $lmatch) {
+    if ($lyyinput - $self->{yypos} <= $self->{__yyunread} - $lmatch) {
         # Normal case.
         $self->{__yyunread} = $lyyinput - $self->{yypos};
 
