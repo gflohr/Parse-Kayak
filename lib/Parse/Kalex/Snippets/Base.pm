@@ -37,7 +37,7 @@ sub new {
 
     if ($self->{__yyoptions}->{yylineno}) {
         $self->{__yylocation} = [1, 0, 1, 0];
-        $self->{__yylastloc} = [1, 0];
+        $self->{__yylastlocation} = [1, 0];
         $self->{__yyunread} = 0;
     }
 
@@ -162,34 +162,22 @@ sub yyless {
     $self->{yypos} += $pos;
 
     if ($self->{__yyoptions}->{yylineno}) {
-        if ($pos > $length) {
-            # Moving the match pointer forward is not the intended use case
-            # but it is simple to handle.
-            my @location = @{$self->{__yylocation}};
-            my $added = substr $self->{__yytext}, $length, $pos - $length;
-            $self->__yyupdateLocation($added);
-            $self->{__yylocation}->[0] = $location[0];
-            $self->{__yylocation}->[1] = $location[1];
-        } elsif ($pos < $length) {
-            # Again, the start of the match has not changed.
-            my $loc = $self->{__yylocation};
-            my $match = $self->{__yytext};
-
-            my $newlines = $match =~ y/\n/\n/;
-            if ($newlines) {
-                $loc->[2] = $loc->[0] + $newlines;
-                my $rindex = rindex $match, "\n";
-                if (0 == $rindex) {
-                    $loc->[0] = 0;
-                    ++$loc->[1];
-                }
-                $loc->[3] = -1 - $rindex + length $match;
-            } else {
-                $loc->[2] = $loc->[0];
-                $loc->[3] = -1 + $loc->[1] + length $match;
-            }
+        # We have to move the old location so that it points to the character
+        # in front of the current match but only if it is the end point of the
+        # current location.  Otherwise, our match was inside text from 
+        # yyunput().
+        my @location = @{$self->{__yylocation}};
+        my @last = @{$self->{__yylastlocation}};
+        if ($location[2] == $last[0] && $location[3] == $last[1]) {
+            $last[0] = $location[2];
+            $last[1] = $location[3];
+            $self->{__yyunread} = -$self->{yypos} + length $self->{yyinput};
         }
-
+        
+        my @old_loc = @{$self->{__yylocation}};
+        my $new_match = substr $self->{yyinput}, $self->{yypos} - $length,
+                               $length;
+        $self->__yyupdateLocation($new_match);
     }
 
     return $self;
@@ -299,9 +287,9 @@ sub __yyupdateLocation {
             $match = $self->{__yytext} . $match;
             @loc = ($self->{__yylocation}->[0], $self->{__yylocation}->[1]);   
         } else {
-            # The start of thhe location is the character after the last
+            # The start of the location is the character after the last
             # location.
-            @loc = @{$self->{__yylastloc}};
+            @loc = @{$self->{__yylastlocation}};
             $loc[1]++;
         }
     } elsif (-$self->{yypos} + $lyyinput > $self->{__yyunread}) {
@@ -327,7 +315,7 @@ sub __yyupdateLocation {
     }
 
     $self->{__yylocation} = \@loc;
-    $self->{__yylastloc} = [$loc[2], $loc[3]];
+    $self->{__yylastlocation} = [$loc[2], $loc[3]];
 
     return $self;
 }
