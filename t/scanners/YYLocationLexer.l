@@ -17,4 +17,5 @@ humanitate              $_[0]->yyinput(10); $_[0]->yyinput(15); return 13;
 minimeque               return 14;
 mercatores              $_[0]->yyunput("catch\nme"); return 15;
 catch\nme               return 16;
+commeant                return 17;
 .|\n

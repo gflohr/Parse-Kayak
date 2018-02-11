@@ -26,7 +26,6 @@ sub new {
         yyoutname => '<stdout>',
         __yystate => [0],
         yy_kalex_debug => 1,
-        __yylocation => [1, 0, 1, 0],
     }, $class;
 
     # This will inject the following members:
@@ -35,6 +34,14 @@ sub new {
     # - __condition_types
     # - __condition_names
     $self->__yyinit;
+
+    if ($self->{__yyoptions}->{yylineno}) {
+        $self->{__yylocation} = [1, 0, 1, 0];
+        $self->{__yylastloc} = [1, 0];
+        $self->{__yyunread} = 0;
+    }
+
+    return $self;
 }
 
 sub __yygetlines {
@@ -126,6 +133,9 @@ sub REJECT {
     $self->{__yyreject_valid} = 1;
     $self->{yypos} -= length $self->{__yytext};
 
+    # FIXME! Do the equivalent for yyless()!
+    $self->{yytext} = $self->{__yytext} = '';
+
     return $self;
 }
 
@@ -179,6 +189,8 @@ sub yyless {
                 $loc->[3] = -1 + $loc->[1] + length $match;
             }
         }
+
+        die $self->{__yyunread};
     }
 
     return $self;
@@ -198,19 +210,6 @@ sub yyrecompile {
 sub yyunput {
     my ($self, $what) = @_;
 
-    if ($self->{__yyoptions}->{yylineno}) {
-        $self->{__yyadded} = $what . $self->{__yyadded};
-        my $lin = length $self->{__yyskipped};
-        my $lun = length $self->{__yyadded};
-        if ($lin >= $lun) {
-            substr $self->{__yyskipped}, -$lun, $lun, '';
-            delete $self->{__yyadded};
-        } else {
-            substr $self->{__yyadded}, -$lin, $lin, '';
-            delete $self->{__yyskipped};
-        }
-    }
-
     substr $self->{yyinput}, $self->{yypos}, 0,  $what;
 
     return $self;
@@ -224,20 +223,6 @@ sub yyinput {
 
     my $skipped = substr $self->{yyinput}, $self->{yypos}, $num;
 
-    if ($self->{__yyoptions}->{yylineno}) {
-        $self->{__yyskipped} .= $skipped;
-        my $lin = length $self->{__yyskipped};
-        my $lun = length $self->{__yyadded};
-        if ($lin >= $lun) {
-            substr $self->{__yyskipped}, -$lun, $lun, '';
-            delete $self->{__yyadded};
-        } else {
-            substr $self->{__yyadded}, -$lin, $lin, '';
-            delete $self->{__yyskipped};
-        }
-    }
-
-    # FIXME! Update location!
     $self->{yypos} += $num;
 
     return $skipped;
@@ -286,41 +271,63 @@ sub __yyescape {
     return $string;
 }
 
+# Updating the location is pretty convoluted in the presence of the functions
+# REJECT, yymore(), and yyinput().  Finally, yyunput() can make accurate
+# location tracking completely impossible, because inserts user-supplied
+# strings in the input.
+#
+# We therefore store the number of characters not yet matched in the
+# instance variable__yyunread.
+#
+# Normally, __yyunread is the difference between the length of yyinput and
+# __yypos.  REJECT, yymore(), yyless(), and yyinput() correct it accordingly.
+# Only yyunput(), which inserts chharacters does *not* update it so that 
+# we can see that we are currently matching user-supplied input, at least
+# partially.  During that time, the location does not get updated so that it
+# still points to where it was before the call to yyunput().
 sub __yyupdateLocation {
     my ($self, $match) = @_;
 
-    # Remember old location in case REJECT is called.  Calling REJECT multiple
-    # times in an action is an error and messes the scanner up.  If we had
-    # rejected the last rule, restore the location to what it was before.
-    #
-    # We have to check __yyrejected and not __yyreject_valid.  The latter has
-    # already been reset by __yypattern().
-    if ($self->{__yyrejected}) {
-        $self->{__yylocation} = [@{$self->{__yyoldlocation}}];        
-    } else {
-        $self->{__yyoldlocation} = [@{$self->{__yylocation}}];
-    }
+    my $lyyinput = length $self->{yyinput};  # 15
+    my $lmatch = length $match;  # 4
+    my @loc;
+    if (-$self->{yypos} + $lyyinput <= $self->{__yyunread} - $lmatch) {
+        # Normal case.
+        $self->{__yyunread} = $lyyinput - $self->{__yypos};
 
-    my $loc = $self->{__yylocation};
-    if (!$self->{__yymore}) {
-        @{$loc}[0, 1] = @{$loc}[2, 3];
-        ++$loc->[1];
+        if ($self->{__yymore}) {
+            # Do not move start of the location.
+            $match = $self->{__yytext} . $match;
+            @loc = ($self->{__yylocation}->[0], $self->{__yylocation}->[1]);   
+        } else {
+            # The start of thhe location is the character after the last
+            # location.
+            @loc = @{$self->{__yylastloc}};
+            $loc[1]++;
+        }
+    } elsif (-$self->{yypos} + $lyyinput > $self->{__yyunread}) {
+        # The first part of the match comes from yyunput().
+        $self->{__yyunread} = $lyyinput - $self->{__yypos};
     } else {
-        $match = $self->{__yytext} . $match;
+        # Leave location untouchhed.
+        return $self;
     }
 
     my $newlines = $match =~ y/\n/\n/;
     if ($newlines) {
-        $loc->[2] = $loc->[0] + $newlines;
+        $loc[2] = $loc[0] + $newlines;
         my $rindex = rindex $match, "\n";
         if (0 == $rindex && !$self->{__yymore}) {
-            $loc->[0] = 0;
-            ++$loc->[1];
+            $loc[0] = 0;
+            ++$loc[1];
         }
-        $loc->[3] = -1 - $rindex + length $match;
+        $loc[3] = -1 - $rindex + $lmatch;
     } else {
-        $loc->[3] = -1 + $loc->[1] + length $match;
+        $loc[3] = -1 + $loc[1] + $lmatch;
     }
+
+    $self->{__yylocation} = \@loc;
+    $self->{__yylastloc} = [$loc[2], $loc[3]];
 
     return $self;
 }
@@ -346,11 +353,6 @@ sub __yymatch {
     }
 
     if ($self->{__yyoptions}->{yylineno}) {
-        # Make up leeway possibly missed location moves.
-        if (length $self->{__yyskipped}) {
-            $self->__yyupdateLocation($self->{__yyskipped});
-            delete $self->{__yyskipped};
-        }
         $self->__yyupdateLocation($match);
     }
 
@@ -390,6 +392,10 @@ sub __yywrap {
         # First round.
         $self->{yyinput} = join '', $self->__yygetlines;
         $self->{yypos} = 0;
+        if ($self->{__yyoptions}->{yylineno}) {
+            $self->{__yylocation} = [1, 0, 1, 0];
+            $self->{__yyseen} = length $self->{yyinput};
+        }
     }
 
     while ($self->{yypos} >= length $self->{yyinput}) {
@@ -401,6 +407,10 @@ sub __yywrap {
 
         $self->{yyinput} = join '', $self->__yygetlines;
         $self->{yypos} = 0;
+        if ($self->{__yyoptions}->{yylineno}) {
+            $self->{__yylocation} = [1, 0, 1, 0];
+            $self->{__yyseen} = length $self->{yyinput};
+        }
     }
 
     return;

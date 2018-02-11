@@ -988,9 +988,9 @@ one from the cache.
 **Important**: Do not forget the call to `quotemeta`, when a name 
 definition should stand for a literal string!
 
-## unput()
+## unput()/yyunput()
 
-Use `$_[0]->unput()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yyunput()` in a [reentrant scanner](#reentrant-scanner).
 
 A call to `unput(STRING)` will insert "STRING" into the input stream
 at the current matching position.  If your input stream is a variable
@@ -1005,6 +1005,14 @@ The following scanner will convert all Perl comments into C comments.
 /\*.*?\*/   ECHO;
 .
 ```
+
+Note that `unput()` messes up the internal location tracking.  The next
+time the input matches after `yylex` is called, the scanner sets up the
+location in such a way that it is accurate again, once all unput characters
+have been read.  Consequently, if the next match consists exclusively of
+unput characters, both start and end point of the location should not be
+taken serious.  If the match consists of unput characters and of characters
+from the input source, the end point is correct, the start point is not. 
 
 ## input()/yyinput()
 
