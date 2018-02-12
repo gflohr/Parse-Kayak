@@ -303,14 +303,15 @@ sub __yyupdateLocation {
     my $lyyinput = length $self->{yyinput};
     my $lmatch = length $match;
     my @loc;
-    # FIXME! It is too optimistic to assume that the "normal" case will
+    # It is too optimistic to assume that the "normal" case will
     # always be exactly true.  If we lost track because of wild mixing of
     # REJECT, yymore, yyless, yyinput, and yyunput, we should make sure
     # that the algorithm is self-healing and will find a valid location
-    # after some time.
-    if ($lyyinput - $self->{yypos} == $self->{__yyunread} - $lmatch) {
-        # Normal case.  Although the additional condition after the || should
-        # actually not happen.
+    # after some time.  That's why the second condition is added here.
+    # This has to be tested though.
+    if ($lyyinput - $self->{yypos} == $self->{__yyunread} - $lmatch
+        || $self->{yypos} - $lmatch > $lyyinput - $self->{__yyunread}) {
+        # Normal case.
         $self->{__yyunread} = $lyyinput - $self->{yypos};
 
         if ($self->{__yymore}) {
