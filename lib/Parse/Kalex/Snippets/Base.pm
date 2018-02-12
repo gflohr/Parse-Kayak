@@ -133,6 +133,17 @@ sub REJECT {
     $self->{__yyreject_valid} = 1;
     $self->{yypos} -= length $self->{__yytext};
 
+    if ($self->{__yyoptions}->{yylineno}) {
+        my $lastloc = $self->{__yylastlocation};
+        my $loc = $self->{__yylocation};
+        # Rewind last location for next match.
+        if ($self->{__yyvalidlocation}) {
+            $lastloc->[0] = $loc->[0];
+            $lastloc->[1] = $loc->[1] - 1;
+            $self->{__yyunread} += length $self->{__yytext};
+        }
+    }
+
     # FIXME! Do the equivalent for yyless()!
     $self->{yytext} = $self->{__yytext} = '';
 
@@ -150,7 +161,6 @@ sub yymore {
 sub yyless {
     my ($self, $pos) = @_;
 
-$DB::single = 1;
     my $length = length $self->{__yytext};
     if ($pos < 0) {
         require Carp;
@@ -164,12 +174,10 @@ $DB::single = 1;
 
     if ($self->{__yyoptions}->{yylineno}) {
         # We have to move the old location so that it points to the character
-        # in front of the current match but only if it is the end point of the
-        # current location.  Otherwise, our match was inside text from 
-        # yyunput().
-        my @location = @{$self->{__yylocation}};
-        my @last = @{$self->{__yylastlocation}};
-        if ($location[2] == $last[0] && $location[3] == $last[1]) {
+        # in front of the current match.
+        if ($self->{__yyvalidlocation}) {
+            my @location = @{$self->{__yylocation}};
+            my @last = @{$self->{__yylastlocation}};
             $last[0] = $location[0];
             $last[1] = $location[1] - 1;
             $self->{__yylastlocation} = \@last;
@@ -213,6 +221,21 @@ sub yyinput {
     my $skipped = substr $self->{yyinput}, $self->{yypos}, $num;
 
     $self->{yypos} += $num;
+
+    if ($self->{__yyvalidlocation}) {
+        # Move start of next match forward.
+        $self->{__yyunread} -= $num;
+
+        my $lastloc = $self->{__yylastlocation};
+        my $newlines = $skipped =~ y/\n/\n/;
+        if ($newlines) {
+            $lastloc->[0] += $newlines;
+            my $rindex = rindex $skipped, "\n";
+            $lastloc->[1] = -1 - $rindex + $num;
+        } else {
+            $lastloc->[1] += $num;
+        }
+    }
 
     return $skipped;
 }
@@ -277,8 +300,8 @@ sub __yyescape {
 sub __yyupdateLocation {
     my ($self, $match) = @_;
 
-    my $lyyinput = length $self->{yyinput};  # 15
-    my $lmatch = length $match;  # 4
+    my $lyyinput = length $self->{yyinput};
+    my $lmatch = length $match;
     my @loc;
     if ($lyyinput - $self->{yypos} <= $self->{__yyunread} - $lmatch) {
         # Normal case.
@@ -287,6 +310,7 @@ sub __yyupdateLocation {
         if ($self->{__yymore}) {
             # Do not move start of the location.
             $match = $self->{__yytext} . $match;
+            $lmatch = length $match;
             @loc = ($self->{__yylocation}->[0], $self->{__yylocation}->[1]);   
         } else {
             # The start of the location is the character after the last
@@ -294,11 +318,14 @@ sub __yyupdateLocation {
             @loc = @{$self->{__yylastlocation}};
             $loc[1]++;
         }
+        $self->{__yyvalidlocation} = 1;
     } elsif (-$self->{yypos} + $lyyinput > $self->{__yyunread}) {
         # The first part of the match comes from yyunput().
         $self->{__yyunread} = $lyyinput - $self->{yypos};
+        delete $self->{__yyvalidlocation};
     } else {
         # Leave location untouchhed.
+        delete $self->{__yyvalidlocation};
         return $self;
     }
 
@@ -342,10 +369,11 @@ sub __yymatch {
         }
     }
 
-    $self->{__yytext} = $match;
     $self->{yypos} += length $match;
 
     $self->__yyupdateLocation($match) if $self->{__yyoptions}->{yylineno};
+
+    $self->{__yytext} = $match;
 
     if (delete $self->{__yymore}) {
         $self->{yytext} .= $match;
