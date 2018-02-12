@@ -303,8 +303,14 @@ sub __yyupdateLocation {
     my $lyyinput = length $self->{yyinput};
     my $lmatch = length $match;
     my @loc;
-    if ($lyyinput - $self->{yypos} <= $self->{__yyunread} - $lmatch) {
-        # Normal case.
+    # FIXME! It is too optimistic to assume that the "normal" case will
+    # always be exactly true.  If we lost track because of wild mixing of
+    # REJECT, yymore, yyless, yyinput, and yyunput, we should make sure
+    # that the algorithm is self-healing and will find a valid location
+    # after some time.
+    if ($lyyinput - $self->{yypos} == $self->{__yyunread} - $lmatch) {
+        # Normal case.  Although the additional condition after the || should
+        # actually not happen.
         $self->{__yyunread} = $lyyinput - $self->{yypos};
 
         if ($self->{__yymore}) {
@@ -319,9 +325,22 @@ sub __yyupdateLocation {
             $loc[1]++;
         }
         $self->{__yyvalidlocation} = 1;
-    } elsif (-$self->{yypos} + $lyyinput > $self->{__yyunread}) {
+    } elsif ($self->{yypos} + $lmatch > $lyyinput - $self->{__yyunread}
+             && !$self->{__yymore}) {
         # The first part of the match comes from yyunput().
-        $self->{__yyunread} = $lyyinput - $self->{yypos};
+        # Pretend that the match only consists of the part not inserted with
+        # yyunput().  That means that we have to shorten $match and set
+        # @loc to the beginning of the current match (the one that we didn't
+        # change).
+        $loc[0] = $self->{__yylocation}->[2];
+        $loc[1] = $self->{__yylocation}->[3] + 1;
+        my $fake_pos = $lyyinput - $self->{__yyunread};
+        $lmatch = $self->{yypos} - $fake_pos;
+        $match = substr $self->{yyinput}, $fake_pos, $lmatch;
+        $self->{__yyunread} = $lyyinput - $fake_pos - $lmatch;
+
+        # Still prevent any fancy location stuff because the location that we'll
+        # compute this round will only be half true.
         delete $self->{__yyvalidlocation};
     } else {
         # Leave location untouchhed.

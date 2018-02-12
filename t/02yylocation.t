@@ -55,9 +55,11 @@ assert_location $lexer, minimeque => 6, 9, 6, 17;
 is $lexer->yylex, 15, 'yylex #15';
 assert_location $lexer, mercatores => 6, 26, 6, 35;
 is $lexer->yylex, 16, 'yylex #16';
-assert_location $lexer, catchme => 5, 1, 6, 35;
+assert_location $lexer, catchme => 6, 26, 6, 35;
 is $lexer->yylex, 17, 'yylex #17';
-assert_location $lexer, commeant => 6, 43, 6, 50;
+assert_location $lexer, commeant => 6, 36, 6, 50;
+is $lexer->yylex, 18, 'yylex #18';
+assert_location $lexer, atque_ea_quae => 6, 52, 6, 64;
 
 done_testing;
 
