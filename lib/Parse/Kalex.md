@@ -1065,13 +1065,14 @@ Perl reference.  That allows you to have as many scanner instances
 as you want inside the same program.  All of these scanners are
 then *reentrant*.
 
-*Object-oriented* is kind of a synonym for *reentrant* in this case.
+Object-oriented is somewhat a synonym for reentrant in this case.
 But reentrant kalex scanners deliberately sacrifice best OO
 practices, not only for compatibility with classical lex/flex behavior
 but also for the idea of allowing you to mess around with the
 internals of the scanner as long as you know what you are doing.
-Calling these scanners reentrant instead and not object-oriented is an
-inexpensive defense against accusations from the OO police.
+Calling these scanners reentrant instead of object-oriented is an
+inexpensive defense against all kinds of accusations from the OO police
+for these design flaws or decisions.
 
 ## Setting the Perl Package
 
