@@ -749,7 +749,7 @@ Use `$_[0]->ECHO()` in a [reentrant scanner](#reentrant-scanners).
 
 ## YYBEGIN
 
-Use `$_[0]->YYBEGIN()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYBEGIN()` in a [reentrant scanner](#reentrant-scanners).
 
 This method is the equivalent of `BEGIN` for flex scanners.  It 
 has been renamed to `YYBEGIN` for kalex because `BEGIN` is a reserved
@@ -765,7 +765,7 @@ The start condition `0` is the same as `'INITIAL'`.
 
 ## YYPUSH
 
-Use `$_[0]->YYPUSH()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYPUSH()` in a [reentrant scanner](#reentrant-scanners).
 
 `YYPUSH('FOOBAR')` puts the scanner into the start condition `FOOBAR`
 and pushes `FOOBAR` onto the start condition stack.  You can fall
@@ -776,7 +776,7 @@ start condition name will cause a run-time error.
 
 ## YYPOP
 
-Use `$_[0]->YYPOP()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->YYPOP()` in a [reentrant scanner](#reentrant-scanners).
 
 `YYPOP` will remove the last pushed start condition from the start
 condition stack and put the scanner back into the condition it was
@@ -787,7 +787,7 @@ will cause a run-time error.
 
 ## REJECT
 
-Use `$_[0]->REJECT()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->REJECT()` in a [reentrant scanner](#reentrant-scanners).
 
 `REJECT` pushes back the last matched text onto the input and matches
 again, but skipping the rule that matched last.  So to say, it
@@ -835,7 +835,7 @@ from only a mostly negligible performance penalty.
 
 ## yymore()
 
-Use `$_[0]->yymore` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yymore` in a [reentrant scanner](#reentrant-scanners).
 
 Normally, the variable `$yytext` gets overwritten after each match.
 Calling `yymore()` from an action has the effect that the matched text
@@ -878,7 +878,7 @@ purpose because you extract and unescape simultaneously.
 
 ## yyless()
 
-Use `$_[0]->yyless` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yyless` in a [reentrant scanner](#reentrant-scanners).
 
 The function `yyless(n)` causes kalex to start the next match at
 the nth character of `$yytext`
@@ -906,7 +906,7 @@ Note that [`$yytext`](#yytext) gets updated accordingly.
 
 ## yyrecompile()
 
-Use `$_[0]->yyrecompile` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yyrecompile` in a [reentrant scanner](#reentrant-scanners).
 
 [Name definitions](#name-definitions) are Perl variables (scalars) of the 
 same name that are lexically scoped to the lexing function [`yylex()`](#yylex):
@@ -1002,7 +1002,7 @@ definition should stand for a literal string!
 
 ## unput()/yyunput()
 
-Use `$_[0]->yyunput()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yyunput()` in a [reentrant scanner](#reentrant-scanners).
 
 A call to `unput(STRING)` will insert "STRING" into the input stream
 at the current matching position.  If your input stream is a variable
@@ -1028,12 +1028,12 @@ from the input source, the end point is correct, the start point is not.
 
 ## input()/yyinput()
 
-Use `$_[0]->yyinput()` in a [reentrant scanner](#reentrant-scanner).
+Use `$_[0]->yyinput()` in a [reentrant scanner](#reentrant-scanners).
 
 The function `input()` moves the match pointer one character forward,
 in other words, that character is skipped in the input stream.  You can
 use `yyinput()` as an alias for `input()`.  [Reentrant 
-scanners](#reentrant-scanner) *only* support the method `yyinput()` but
+scanners](#reentrant-scanners) *only* support the method `yyinput()` but
 not `input()`.
 
 If you pass a positive integer as an argument, the pointer is forwarded
@@ -1076,7 +1076,7 @@ for these design flaws or decisions.
 
 ## Setting the Perl Package
 
-There are two ways for defining the namespace for the kalex methods
+There are two ways defining the namespace for the kalex methods
 and instance variables.
 
 You can use a [`%option` directive](#option-directives):
@@ -1147,7 +1147,7 @@ often ends at path references in the source file.
 
 ## Can't Use String ("...") As a Hashref
 
-When creating a [reentrant scanner](#reentrant-scanner), you have to call
+When creating a [reentrant scanner](#reentrant-scanners), you have to call
 *methods*, not *functions* from [actions](#actions):
 
 ```lex
