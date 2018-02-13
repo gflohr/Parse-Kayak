@@ -60,10 +60,12 @@ Or from Perl:
       * [yymore()](#yymore)
       * [yyless()](#yyless)
       * [yyrecompile()](#yyrecompile)
-      * [unput()](#unput)
+      * [unput()/yyunput()](#unput-yyunput)
+      * [input()/yyinput()](#input-yyinput)
    * [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
       * [Quantifier Follows Nothing In Regex](#quantifier-follows-nothing-in-regex)
       * [Unknown regexp modifier "/P" at](#unknown-regexp-modifier-p-at)
+      * [Can't Use String ("...") As a Hashref](#can-t-use-string-as-a-hashref)
    * [DIFFERENCES TO FLEX](#differences-to-flex)
       * [Functions and Variables](#functions-and-variables)
       * [No yywrap() By Default](#no-yywrap-by-default)
@@ -96,6 +98,20 @@ left-hand side and an optional action to execute for each match on
 the right-hand side. The action consists of arbitrary Perl code.  
 The match text and possibly captured sub matches are available as 
 Perl variables.
+
+Most of this manual assumes that you create a scanner as a 
+standalone Perl script `lex.yy.pl` from a scanner description
+`NAME.l`.  All variables and functions in the generated scanner belong
+to the `main`.  This default type of scanners is really best 
+suited for one-shot solutions and quick experiments with kalex.
+
+For any serious application you will rather create an 
+object-oriented, reentrant scanner.  If you already have experience
+with `lex`, `flex` or similar scanner generators for other languages,
+you should probably read the section [Reentrant
+Scanners](#reentrant-scanners) first.  For learning the general
+concepts behind scanner generators, using the default mode is probably
+simpler.
 
 # EXAMPLES
 
@@ -308,7 +324,7 @@ Options are defined with the `%option` directive
 Boolean options can be preceded by "no" to negate them.  Options
 that take a value receive the value in a single- or double-quoted
 string.  Escape sequences like `\n` are only expanded in
-double-quoted strings. (FIXME!)
+double-quoted strings. (FIXME! Not implemented!)
 
 The following options are supported;
 
@@ -513,27 +529,20 @@ use it!
 # HOW THE INPUT IS MATCHED
 
 The generated scanner matches its input against the patterns provided in
-the rules section, stopping at the first match.  The patterns are 
-anchored to the position where the last match ended.  The generated
-`yylex()` function roughly looks like this:
-
-```perl
-sub yylex {
-    while (pos() < length $yytext) {
-        $yytext =~ /\G$pattern_for_this_start_condition/gm;
-        execute_action();
-    }
-}
-```
+the rules section, that are valid for the current [start
+condition](#start-conditions), stopping at the first match.  The
+starting position of the match `pos()` is set to where the last
+match left off.
 
 If a rule matches but the match is empty, you will create  an endless 
 loop unless you change the start condition in the action code or return.
 Currently, there is no warning about empty matches.
 
-The matched text is availabe in the variable `$yytext` or in the variable
-`$^N`.  The difference is that `$^N` will only contain the matched text
-for the current rule while `$yytext` may contain prefixed text resulting
-froma a preceding invocation of [`yymore()`](#yymore).
+The matched text is availabe in the variable `$yytext` (resp.
+`$_[0]->{yytext}`) or in the variable `$^N`.  The difference is that
+`$^N` will only contain the matched text for the current rule while 
+`$yytext` may contain prefixed text resulting froma a preceding
+invocation of [`yymore()`](#yymore).
 
 Then the [action](#actions) for the matching rule is executed.  Remember
 that there is always a default rule appended to the user supplied rules:
@@ -1038,6 +1047,49 @@ the input:
 \\       my $c = yyinput(1); yyprint "\\$c\n";
 .|\n
 ```
+
+# THE GENERATED SCANNER
+
+# REENTRANT SCANNERS
+
+By default, kalex generates a scanner that is scoped to the Perl
+`main` package.  Other than generally being considered a design flaw
+it has the disadvantage that you cannot have more than one kalex
+scanner in your Perl program.
+
+A better approach is to encapsulate the entire scanner state in one
+Perl reference.  That allows you to have as many scanner instances
+as you want inside the same program.  All of these scanners are
+then *reentrant*.
+
+*Object-oriented* is kind of a synonym for *reentrant* in this case.
+But reentrant kalex scanners deliberately sacrifice best OO
+practices, not only for compatibility with classical lex/flex behavior
+but also for the idea of allowing you to mess around with the
+internals of the scanner as long as you know what you are doing.
+Calling these scanners reentrant instead and not object-oriented is an
+inexpensive defense against accusations from the OO police.
+
+## Setting the Perl Package
+
+There are two ways for defining the namespace for the kalex methods
+and instance variables.
+
+You can use a [`%option` directive](#option-directives):
+
+```lex
+%option package=Smellovision::Parse::Lexer
+```
+
+The other possibility is to use the command-line option `-p` or 
+`--package`: 
+
+```shell
+$ kalex --package="Smellovision::Parse::Lexer"
+```
+
+The command-line option has precedence over the `%option` directive.
+FIXME! Really?
 
 # FREQUENTLY ASKED QUESTIONS
 
