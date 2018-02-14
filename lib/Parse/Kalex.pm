@@ -44,8 +44,8 @@ sub new {
     }
     @input_files = ('') if !@input_files;
     my $self = {
-        __yyoptions => \%options,
-        yyinput_files => \@input_files,
+        __options => \%options,
+        __input_files => \@input_files,
     };
 
     bless $self, $class;
@@ -512,11 +512,11 @@ sub __yylex {
     my ($self) = @_;
 
     if (!exists $self->{__yyinput}) {
-        my $encoding = $self->{__yyoptions}->{encoding};
+        my $encoding = $self->{__options}->{encoding};
         binmode STDOUT, ":encoding($encoding)";
         binmode STDERR, ":encoding($encoding)";
 
-        my @filenames = @{$self->{__yyinput_files}};
+        my @filenames = @{$self->{__input_files}};
         my @locations;
         my $input = '';
 
@@ -590,14 +590,11 @@ sub scan {
         return $self->__yyerror;
     };
 
-    my @input_files = @{$self->{yyinput_files}};
-    $self->{__yyinput_files} = \@input_files;
-
     my $parser = Parse::Kalex::Parser->new;
     my %options;
     foreach my $option (qw(debug package line)) {
-        if (exists $self->{__yyoptions}->{$option}) {
-            $options{$option} = $self->{__yyoptions}->{$option};
+        if (exists $self->{__options}->{$option}) {
+            $options{$option} = $self->{__options}->{$option};
         }
     }
     $parser->YYData->{generator} = Parse::Kalex::Generator->new($self,
@@ -629,7 +626,7 @@ sub output {
         $self->__yyfatal(__"output() called before scan()");
     }
 
-    my %options = %{$self->{__yyoptions}};
+    my %options = %{$self->{__options}};
     if (defined $options{outfile} && defined $options{stdout}) {
         $self->__yyfatal(__("'\%option stdout' is mutually exclusive with"
                             . " the command-line option '--outfile'"));
