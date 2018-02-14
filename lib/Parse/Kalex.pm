@@ -401,25 +401,27 @@ sub __yylexUSER_CODE {
     return USER_CODE => $code;
 }
 
-sub __unquoteGeneral {
-    my ($self, $string) = @_;
-
-    $string =~ s/\\(.)/$1/gs;
-
-    return $string;
-}
-
 sub __yylexOPTION_VALUE {
     my ($self) = @_;
 
     $self->__yyconsumeWhitespace;
 
-    if ($self->{__yinput} =~ s/^"([^\\"]*(?:\\"[^\\"]*)*)"//) {
+    if ($self->{__yyinput} =~ s/^"([^\\"]*(?:\\(?:.|\n)[^\\"]*)*)"//) {
         $self->YYPOP;
-        return OPTION_VALUE => $self->__unquoteGeneral($1);
-    } elsif ($self->{__yinput} =~ s/^'([^\\']*(?:\\'[^\\']*)*)'//) {
+        my $value = eval "qq{$1}";
+        if ($@) {
+            # FIXME! Define how to communicate lexer errors to the parser.
+            return '', $1;
+        }
+        return OPTION_VALUE => $value;
+    } elsif ($self->{__yyinput} =~ s/^'([^\\']*(?:\\(?:[\\'])[^\\']*)*)'//) {
         $self->YYPOP;
-        return OPTION_VALUE => $self->__unquoteGeneral($1);
+        my $value = eval "q{$1}";
+        if ($@) {
+            # FIXME! Define how to communicate lexer errors to the parser.
+            return '', $1;
+        }
+        return OPTION_VALUE => $value;
     } elsif ($self->{__yyinput} =~ s/^($NOWS)//) {
         $self->YYPOP;
         return OPTION_VALUE => $1;
@@ -437,7 +439,7 @@ sub __yylexOPTION {
         return OPTION_NAME => $1;
     } elsif ($self->{__yyinput} =~ s/^=//) {\
         $self->YYPUSH('OPTION_VALUE');
-        return $self->__yylex;
+        return '=', '=';
     } elsif ($self->{__yyinput} =~ s/^\n//) {
         $self->YYPOP;
         return $self->__yylex;
