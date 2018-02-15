@@ -626,6 +626,9 @@ sub output {
         $self->__yyfatal(__"output() called before scan()");
     }
 
+    my $output = eval { $generator->generate };
+    $self->__yyfatal($@) if $@;
+
     my %options = %{$self->{__options}};
     if (defined $options{outfile} && defined $options{stdout}) {
         $self->__yyfatal(__("'\%option stdout' is mutually exclusive with"
@@ -633,7 +636,7 @@ sub output {
     }
 
     if (!defined $options{outfile}) {
-        $options{outfile} = defined $options{package}
+        $options{outfile} = defined $generator->package
             ? 'lex.yy.pm' : 'lex.yy.pl';
     }
 
@@ -653,9 +656,6 @@ sub output {
 
     $self->{__outname} = $outname;
     $self->{__outfh} = $fh;
-
-    my $output = eval { $generator->generate(%options) };
-    $self->__yyfatal($@) if $@;
 
     $fh->print($output)
         or $self->__yyfatal(__x("error writing to '{filename}:'"
