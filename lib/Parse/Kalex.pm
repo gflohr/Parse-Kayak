@@ -381,7 +381,10 @@ sub __yylexRULES {
     } elsif ($self->{__yyinput} =~ s/^%%$WS*\n?//o) {
         $self->YYBEGIN('USER_CODE');
         return SEPARATOR => '%%';
+    } elsif ($self->{__yyinput} =~ s/^$WS*\n//) {
+        return $self->__yylex;
     } elsif (my $ws = $self->__yyconsumeWhitespace) {
+        # FIXME!
     }
 
     $self->YYPUSH('RULES_REGEX');
