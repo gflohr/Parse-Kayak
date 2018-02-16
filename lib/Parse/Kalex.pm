@@ -704,8 +704,7 @@ sub __getOptions {
         'h|help' => \$options{help},
         'V|version' => \$options{version},
     );
-    $options{line} = !$options{noline};
-    delete $options{noline};
+    $options{line} = 1 if delete $options{noline};
 
     if ($options{encoding} =~ /[\\\)]/) {
         $self->__yyfatal(__x("invalid encoding '{encoding}'!",

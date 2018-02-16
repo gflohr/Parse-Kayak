@@ -25,9 +25,9 @@ sub compare_files;
 
 my $scannerdir = File::Spec->catfile('t', 'scanners');
 opendir my $dh, $scannerdir or die "$scannerdir: $!\n";
-my @scanners = map { s/\.l$//; $_ }
-               grep { /\.l$/ }
-               grep { /^[a-z]/ }
+my @scanners = map { s/\.expect$//; $_ }
+               grep { /\.expect$/ }
+               grep { /^[a-zA-Z]/ }
                readdir $dh;
 
 foreach my $scanner (sort @scanners) {

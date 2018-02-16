@@ -40,7 +40,9 @@ sub new {
         __condition_names => ['INITIAL'],
         __rules => [],
         __cli_options => \%cli_options,
-        __options => {},
+        __options => {
+            line => 1,
+        },
         __names => {},
     }, $class;
 }

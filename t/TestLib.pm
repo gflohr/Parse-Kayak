@@ -32,6 +32,9 @@ sub create_lexer {
     ok $scanner->scan, "$name scan";
     ok $scanner->output, "$name output";
     ok -e $scanner_file, "$name -> $scanner_file";
+
+    return $scanner_file if delete $options{x_no_require};
+
     ok require $scanner_file, "$name -> require $scanner_file";
     ok((unlink $scanner_file), "$name -> unlink $scanner_file");
 
