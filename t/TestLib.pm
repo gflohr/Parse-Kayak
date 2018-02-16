@@ -27,7 +27,8 @@ sub create_lexer {
     unlink $scanner_file;
 
     my $scanner = Parse::Kalex->new({outfile => $scanner_file,
-                                     package => $name}, $lfile);
+                                     package => $name, %options}, 
+                                     $lfile);
     ok $scanner, "$name new";
     ok $scanner->scan, "$name scan";
     ok $scanner->output, "$name output";

@@ -25,6 +25,42 @@ my ($lexer_file, $has_line);
 $lexer_file = create_lexer 'echo', x_no_require => 1;
 $has_line = check_line $lexer_file;
 ok $has_line, 'default';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'echo', x_no_require => 1, line => 0;
+$has_line = check_line $lexer_file;
+ok !$has_line, 'command-line noline';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-line', x_no_require => 1, line => 0;
+$has_line = check_line $lexer_file;
+ok !$has_line, 'command-line noline overrides option';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-noline', x_no_require => 1, line => 0;
+$has_line = check_line $lexer_file;
+ok !$has_line, 'command-line noline matches nooption';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-line', x_no_require => 1, line => 1;
+$has_line = check_line $lexer_file;
+ok $has_line, 'command-line line matches option';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-noline', x_no_require => 1, line => 1;
+$has_line = check_line $lexer_file;
+ok $has_line, 'command-line line overrides option';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-line', x_no_require => 1;
+$has_line = check_line $lexer_file;
+ok $has_line, 'option only';
+ok unlink $lexer_file;
+
+$lexer_file = create_lexer 'option-noline', x_no_require => 1;
+$has_line = check_line $lexer_file;
+ok !$has_line, 'nooption only';
+ok unlink $lexer_file;
 
 done_testing;
 
