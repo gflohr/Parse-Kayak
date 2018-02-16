@@ -372,7 +372,7 @@ EOF
     my $default_regex = Parse::Kalex::Generator::Regex->new(
         '.|\n', @location);
     @location = [__FILE__, 1 + __LINE__, 8];
-    my $default_action = '$self->ECHO;';
+    my $default_action = '$yyself->ECHO;';
     my $default_rule = [
         ['-1'],
         $default_regex,
@@ -424,7 +424,7 @@ sub __writeYYLex {
     if (defined $self->{__options}->{package}) {
         $output .= <<'EOF';
 sub yylex {
-    my ($self) = @_;
+    my ($yyself) = @_;
 
 EOF
     } else {
@@ -434,7 +434,7 @@ package main;
 use Storable qw(freeze);
 
 sub yylex {
-    my ($self) = $yylexer;
+    my ($yyself) = $yylexer;
 
 EOF
     }
@@ -447,8 +447,8 @@ EOF
     }
 
     $output .= <<'EOF';
-    if (!$self->{__yyvariables}) {
-        $self->{__yyvariables} = {};
+    if (!$yyself->{__yyvariables}) {
+        $yyself->{__yyvariables} = {};
 EOF
 
     foreach my $name (keys %{$self->{__names}}) {
@@ -456,33 +456,34 @@ EOF
         my $dollar_name = '$' . $name;
         $output .= <<EOF;
         $dollar_name = $value;
-        \$self->{__yyvariables}->{$name} = \\$dollar_name;
+        \$yyself->{__yyvariables}->{$name} = \\$dollar_name;
 EOF
     }
 
     $output .= <<'EOF';
 
-        $self->yyrecompile;
+        $yyself->yyrecompile;
     }
 
-    $self->{yytext} = '';
+    $yyself->{yytext} = '';
     while (1) {
         # Difference to flex! We return false, not 0 on EOF.
-        $self->__yywrap and return;
-        my $__yypattern = $self->__yypattern;
+        $yyself->__yywrap and return;
+        my $__yypattern = $yyself->__yypattern;
 
-        pos $self->{yyinput} = $self->{yypos};
-        $self->{yyinput} =~ /$__yypattern/g;
+        pos $yyself->{yyinput} = $yyself->{yypos};
+        $yyself->{yyinput} =~ /$__yypattern/g;
         my ($__yyruleno, $__yycapture_offset, $__yycaptures) =
-            @{$self->{__yymatch}};
-        $self->__yymatch($^N);
+            @{$yyself->{__yymatch}};
+        $yyself->__yymatch($^N);
 
-        @_ = ($self);
+        @_ = ($yyself);
         foreach my $yy ($__yycapture_offset + 1
                        .. $__yycapture_offset +  $__yycaptures) {
-            push @_, substr $self->{yyinput}, $-[$yy], $+[$yy] - $-[$yy]; 
+            push @_, substr $yyself->{yyinput}, $-[$yy], $+[$yy] - $-[$yy]; 
         };
 
+        no strict;
         goto "YYRULE$__yyruleno";
 EOF
 
