@@ -625,14 +625,15 @@ sub output {
     my ($self) = @_;
 
     my $generator = $self->{__generator};
+
+    my %options = %{$self->{__options}};
+
     if (!$generator) {
         $self->__yyfatal(__"output() called before scan()");
     }
 
-    my $output = eval { $generator->generate };
-    $self->__yyfatal($@) if $@;
+    $generator->mergeOptions;
 
-    my %options = %{$self->{__options}};
     if (defined $options{outfile} && defined $options{stdout}) {
         $self->__yyfatal(__("'\%option stdout' is mutually exclusive with"
                             . " the command-line option '--outfile'"));
@@ -643,22 +644,29 @@ sub output {
             ? 'lex.yy.pm' : 'lex.yy.pl';
     }
 
-    my $encoding = $options{encoding};
-    
-    my ($fh, $outname);
+    my $outname;
     if ($options{stdout}) {
         $outname = __"<standard output>";
-        $fh = \*STDOUT;
     } else {
         $outname = $options{outfile};
+    }
+
+    $self->{__outname} = $outname;
+
+    my $output = eval { $generator->generate };
+    $self->__yyfatal($@) if $@;
+
+    my $encoding = $options{encoding};
+    
+    my ($fh);
+    if ($options{stdout}) {
+        $fh = \*STDOUT;
+    } else {
         open $fh, ">:encoding($encoding)", $outname
             or $self->__yyfatal(__x("error opening '{filename} for writing:'"
                                     . " {error}!",
                                     filename => $outname, error => $!));
     }
-
-    $self->{__outname} = $outname;
-    $self->{__outfh} = $fh;
 
     $fh->print($output)
         or $self->__yyfatal(__x("error writing to '{filename}:'"

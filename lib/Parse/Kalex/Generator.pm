@@ -280,7 +280,7 @@ sub package {
     return $self->{__options}->{package};
 }
 
-sub generate {
+sub mergeOptions {
     my ($self) = @_;
 
     # Options given on the command-line override those from the definition
@@ -291,8 +291,16 @@ sub generate {
     }
     $self->{__options} = \%options;
 
+    return $self;
+}
+
+sub generate {
+    my ($self) = @_;
+
     my $output = '';
     my $top_code = $self->__topCode;
+
+    my %options = %{$self->{__options}};    
 
     if (defined $options{package}) {
         $output .= <<EOF;
