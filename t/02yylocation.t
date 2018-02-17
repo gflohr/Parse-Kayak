@@ -60,6 +60,10 @@ is $lexer->yylex, 17, 'yylex #17';
 assert_location $lexer, commeant => 6, 36, 6, 50;
 is $lexer->yylex, 18, 'yylex #18';
 assert_location $lexer, atque_ea_quae => 6, 52, 6, 64;
+is $lexer->yylex, 19, 'yylex #19';
+assert_location $lexer, causa_Helvetii => 8, 62, 9, 15;
+is $lexer->yylex, 20, 'yylex #20';
+assert_location $lexer, Helvetii_quoque => 8, 68, 9, 6;
 
 done_testing;
 

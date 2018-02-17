@@ -256,6 +256,42 @@ sub yyrestart {
     return $self;
 }
 
+sub yyrewind {
+    my ($self, $num) = @_;
+
+$DB::single = 1;
+    if ($num < 0) {
+        require Carp;
+        Carp::croak("yyrewind() called with negative argument $num");
+    }
+
+    $self->{yypos} -= $num;
+    $self->{yypos} = 0 if $self->{yypos} < 0;
+
+    if ($self->{__yyvalidlocation}) {
+        $self->{__yyunread} += $num;
+
+        my $lastloc = $self->{__yylastlocation};
+        my $rewind = substr $self->{yyinput}, $self->{yypos}, $num;
+        my $newlines = $rewind =~ y/\n/\n/;
+        if ($newlines) {
+            $lastloc->[0] -= $newlines;
+            my $parsed = substr $self->{yyinput}, 0, $self->{yypos};
+            my $rindex = rindex $parsed, "\n";
+            if ($rindex == -1) {
+                # FIXME! Must be tested!
+                $lastloc->[1] = $self->{yypos};
+            } else {
+                $lastloc->[1] = $self->{yypos} - $rindex - 1;
+            }
+        } else {
+            $lastloc->[1] -= $num;
+        }
+    }
+
+    return $self;
+}
+
 sub __yyescape {
     my ($self, $string) = @_;
 

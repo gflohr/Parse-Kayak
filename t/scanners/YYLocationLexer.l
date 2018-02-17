@@ -19,4 +19,6 @@ mercatores              $_[0]->yyunput("catch me if you can"); return 15;
 catch\ me\              return 16;
 if\ you\ can\ saepe\ commeant return 17;
 atque\ ea\ quae         return 18;
+causa\ Helvetii\nquoque\ reliquos $_[0]->yyrewind(24); return 19;
+Helvetii\nquoque        return 20;
 .|\n
