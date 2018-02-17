@@ -20,7 +20,7 @@ sub new {
     my ($class, $lexer, %options) = @_;
 
     my %cli_options;
-    foreach my $option (qw (yylineno line package)) {
+    foreach my $option (qw (yylineno line package strict)) {
         $cli_options{$option} = $options{$option} if defined $options{$option};
     }
 
@@ -66,6 +66,7 @@ sub checkOption {
         debug => 0,
         yylineno => 0,
         line => 1,
+        strict => 0,
     );
     my %voptions = (
         package => 1,
@@ -284,7 +285,7 @@ sub mergeOptions {
     my ($self) = @_;
 
     # Options given on the command-line override those from the definition
-    # seciton.  Merge them.
+    # section.  Merge them.
     my %options = %{$self->{__options}};    
     foreach my $option (keys %{$self->{__cli_options}}) {
         $options{$option} = $self->{__cli_options}->{$option};
@@ -301,6 +302,10 @@ sub generate {
     my $top_code = $self->__topCode;
 
     my %options = %{$self->{__options}};    
+
+    if ($options{strict} && length $top_code) {
+        $top_code = "use strict;\n\n$top_code";
+    }
 
     if (defined $options{package}) {
         $output .= <<EOF;
@@ -338,10 +343,11 @@ EOF
     my $user_code = $self->__userCode;
 
     if (length $user_code) {
+        my $strict = $options{strict} ? "use" : "no";
         if (defined $options{package}) {
-            $output .= "package $options{package};\n\nno strict;\n\n";
+            $output .= "package $options{package};\n\n$strict strict;\n\n";
         } else {
-            $output .= "package main;\n\nno strict;\n\n";
+            $output .= "package main;\n\n$strict strict;\n\n";
         }
         $output .= $user_code;
     } elsif ($options{package}) {
@@ -491,7 +497,11 @@ EOF
             push @_, substr $yyself->{yyinput}, $-[$yy], $+[$yy] - $-[$yy]; 
         };
 
-        no strict;
+EOF
+
+    $output .= "        no strict;\n" if !$self->{__options}->{strict};
+
+    $output .= <<'EOF';
         goto "YYRULE$__yyruleno";
 EOF
 
@@ -550,6 +560,10 @@ sub __defCode {
         $snippet .= "\n";
         $output .= $self->__addLocation($snippet, @location);
         $output .= $snippet;
+    }
+
+    if ($self->{__options}->{strict} && length $output) {
+        $output = "use strict;\n\n$output";
     }
 
     return $output;

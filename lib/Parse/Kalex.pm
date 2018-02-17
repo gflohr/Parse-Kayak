@@ -595,7 +595,7 @@ sub scan {
 
     my $parser = Parse::Kalex::Parser->new;
     my %options;
-    foreach my $option (qw(debug package line)) {
+    foreach my $option (qw(debug package line strict)) {
         if (exists $self->{__options}->{$option}) {
             $options{$option} = $self->{__options}->{$option};
         }
@@ -710,6 +710,7 @@ sub __getOptions {
         # Generated code
         'p|package=s' => \$options{package},
         'L|noline' => \$options{noline},
+        'strict' => \$options{strict},
 
         # Informative output.
         'h|help' => \$options{help},
@@ -829,6 +830,10 @@ EOF
 
     print __(<<EOF);
   -L, --noline                suppress #line directives in scanner
+EOF
+
+    print __(<<EOF);
+      --strict                enable strict mode in scanner
 EOF
 
     print "\n";
