@@ -17,7 +17,7 @@ use File::Spec;
 use Parse::Kalex;
 
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(create_lexer);
+@EXPORT_OK = qw(create_lexer assert_location);
 
 sub create_lexer {
     my ($name, %options) = @_;
@@ -44,3 +44,16 @@ sub create_lexer {
 
     return $lexer;
 }
+
+sub assert_location {
+    my ($lexer, $test, @expect) = @_;
+
+    my @location = $lexer->yylocation;
+    my $name = ref $lexer;
+
+    is $location[0], $expect[0], "$name $test from_line";
+    is $location[1], $expect[1], "$name $test from_column";
+    is $location[2], $expect[2], "$name $test to_line";
+    is $location[3], $expect[3], "$name $test to_column";
+}
+

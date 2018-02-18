@@ -17,9 +17,7 @@ BEGIN {
     unshift @INC, $test_dir;
 }
 
-use TestLib;
-
-sub assert_location;
+use TestLib qw(assert_location create_lexer);
 
 my $lexer = create_lexer 'YYLocationLexer';
 $lexer->{yyin} = 't/scanners/YYLocationLexer.in';
@@ -66,15 +64,3 @@ is $lexer->yylex, 20, 'yylex #20';
 assert_location $lexer, Helvetii_quoque => 8, 68, 9, 6;
 
 done_testing;
-
-sub assert_location {
-    my ($lexer, $test, @expect) = @_;
-
-    my @location = $lexer->yylocation;
-    my $name = ref $lexer;
-     
-    is $location[0], $expect[0], "$name $test from_line";
-    is $location[1], $expect[1], "$name $test from_column";
-    is $location[2], $expect[2], "$name $test to_line";
-    is $location[3], $expect[3], "$name $test to_column";
-}

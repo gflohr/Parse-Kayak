@@ -259,7 +259,6 @@ sub yyrestart {
 sub yyrewind {
     my ($self, $num) = @_;
 
-$DB::single = 1;
     if ($num < 0) {
         require Carp;
         Carp::croak("yyrewind() called with negative argument $num");
