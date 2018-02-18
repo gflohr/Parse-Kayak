@@ -119,6 +119,12 @@ sub yyrewind {
     return $yylexer->yyrewind($num);
 }
 
+sub yyshrink {
+    my ($num) = @_;
+
+    return $yylexer->yyshrink($num);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

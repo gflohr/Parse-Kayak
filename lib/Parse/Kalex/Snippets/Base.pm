@@ -291,6 +291,40 @@ sub yyrewind {
     return $self;
 }
 
+sub yyshrink {
+    my ($self, $num) = @_;
+
+    if ($num < 0) {
+        require Carp;
+        Carp::croak("yyshrink() called with negative argument $num");
+    } elsif ($num >= length $self->{__yytext}) {
+        return $self;
+    }
+
+    $self->{__yytext} = $self->{yytext} = substr $self->{__yytext}, 0, $num;
+
+    if ($self->{__yyvalidlocation}) {
+        my $match = $self->{yytext};
+        my $newlines = $match =~ y/\n/\n/;
+        my $loc = $self->{__yylocation};
+
+        if ($newlines) {
+            $loc->[2] = $loc->[0] + $newlines;
+            my $rindex = rindex $match, "\n";
+            if (0 == $rindex) {
+                $loc->[0] = 0;
+                ++$loc->[1];
+            }
+            $loc->[3] = -1 - $rindex + $num;
+        } else {
+            $loc->[2] = $loc->[0];
+            $loc->[3] = -1 + $loc->[1] + $num;
+        }
+    }
+
+    return $self;
+}
+
 sub __yyescape {
     my ($self, $string) = @_;
 
