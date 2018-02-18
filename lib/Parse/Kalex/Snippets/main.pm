@@ -125,6 +125,18 @@ sub yyshrink {
     return $yylexer->yyshrink($num);
 }
 
+sub yy_start_name {
+    my ($num) = @_;
+
+    return $yylexer->yy_start_name($num);
+}
+
+sub yy_start_number {
+    my ($name) = @_;
+
+    return $yylexer->yy_start_number($name);
+}
+
 package Parse::Kalex::Lexer;
 
 use strict;

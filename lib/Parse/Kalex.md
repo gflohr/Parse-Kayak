@@ -1156,6 +1156,18 @@ YYRULE2:  action2; next;
 }
 ```
 
+When `yylex()` is called, it enters an endless loop matching the global
+input source until either the end of input is reached and no other
+source is supplied via  [`yywrap`](#yywrap) or one of the actions
+executes a `return` statement.
+
+If the end of input is reached, the scanner behavior is undefined, until
+you either call [`yyrestart`](#yyrestart) or just point [`$yyin`](#yyin]
+to a new input source.
+
+If `yylex()` returns from one of the actions, the scanner state does
+not change and resumes where it left off, when it is called again.
+
 If you have enabled [strictness](#strictness) in the rules section,
 you can declare variables either in the code preceding the first
 rule, or in any action.  They will then be declared in all following
@@ -1165,6 +1177,94 @@ Note that the code from the [user code
 section](#format-of-the-user-code-section) is placed *after* the
 routine `yylex()`.  If you want to invoke them without parentheses,
 you have to declare them in one of the code sections.
+
+# START CONDITIONS
+
+The scanner is in one scanner state at a time, called a *start
+condition*.  Rules active for a certain start condition are prefixed
+with `<SC>` where `SC` stands for the name of the start condition.
+
+```lex
+<DQSTRING>[^"]*               return STRING => $yytext;
+```
+
+If the above scanner is in the start condition `DQSTRING`, it will
+consume everything until the next double quote and return the text
+matched.  The next rule will be active in the start conditions
+`INITIAL` and `DQSTRING`:
+
+```lex
+<INITIAL,DQSTRING>\(.)
+```
+
+You declare start conditions in the [definitions
+section](#format-of-the-definitions-section) using unindented lines
+starting with either `%s` or `%x` followed by a space-separacted
+list of condition names.  Start conditions declared with `%s` are
+*inclusive* start conditions; those declared with `%x` are *exclusive*.
+
+## Inclusive and Exclusive Start Conditions
+
+If the current start condition is an inclusive one, all rules marked
+with that start conditions and all rules which have no start condition
+at all are active.  If the current start condition is exclusive, 
+only the rules marked with that start condition are active, those without
+a start condition are inactive.
+
+Example:
+
+```lex
+%s MARKUP SCRIPT
+%x PRE
+%%
+[ \t\r\n]+        yyprint " ";
+<PRE>[ \t\r\n]+   ECHO;
+```
+
+The above scanner will collapse all sequences of whitespace into one
+single space character, except, when in start condition `PRE`.  Note
+that `PRE` is an *exclusive* start condition declared with `%x`.
+If it had been declared as an *inclusive* start condition, the
+first rule that collapses white space would have always been active,
+even in start condition `PRE`.  Exclusive start conditions can be
+used for mini-scanners that are completely independent from the rest
+of the scanners.
+
+## Switching Start Conditions
+
+Calling `YYBEGIN(CONDITION)` switches to start condition `CONDITION`.
+You can also use [`yy_push_state()`](#yy_push_state), 
+[`yy_pop_state()`](#yy_pop_state), and 
+[`yy_top_state()`](#yy_top_state), to manipulate a stack of start
+conditions.
+
+## INITIAL
+
+The scanner starts in the special start condition `INITIAL` which is
+present in every scanner.  The start condition `0` is a synonym for
+`INITIAL`.
+
+## The Catch-All Start Condition `*`
+
+The catch-all start condition `<*>` stands for *every* start condition,
+even exclusive one:
+
+```lex
+<*>[ \t\r\n]+       /* discard  */
+```
+
+This scanner discards all whitespace in all scanner states.  Note that
+you cannot combine `*` with other start conditions (which would not
+make sense anyway).
+
+## Getting the Current Start Condition
+
+You can get the current start condition with any of 
+[`YYSTATE/$_[0]->YYSTATE`](#YYSTATE), 
+[`YY_START/$_[0]->YY_START`](#YY_START), or
+[`yy_top_state/$_[0]->yy_top_state`](#yy_top_state), they are all
+equivalent.  Note, however, that start conditions are non-negative
+integers.  
 
 # REENTRANT SCANNERS
 

@@ -124,6 +124,18 @@ sub YYBEGIN {
     return $self;
 }
 
+sub yy_start_name {
+    my ($self, $state) = @_;
+
+    return $self->{__yyconditions}->[$state];
+}
+
+sub yy_start_number {
+    my ($self, $name) = @_;
+
+    return $self->{__yycondition_names}->[$name];
+}
+
 sub REJECT {
     my ($self) = @_;
 
