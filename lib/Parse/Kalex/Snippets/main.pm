@@ -42,16 +42,50 @@ sub YYBEGIN {
     $yylexer->YYBEGIN($condition);
 }
 
+sub yy_begin_state {
+    my ($condition) = @_;
+
+    $yylexer->YYBEGIN($condition);
+}
+
 sub YYPUSH {
     my ($condition) = @_;
 
     $yylexer->YYPUSH($condition);
 }
 
-sub YYPOP {
+sub yy_push_state {
     my ($condition) = @_;
 
-    $yylexer->YYPOP($condition);
+    $yylexer->YYPUSH($condition);
+}
+
+sub YYPOP {
+    $yylexer->YYPOP;
+}
+
+sub yy_pop_state {
+    my ($condition) = @_;
+
+    $yylexer->yy_pop_state;
+}
+
+sub YYTOP {
+    $yylexer->YYTOP;
+}
+
+sub yy_top_state {
+    my ($condition) = @_;
+
+    $yylexer->yy_top_state;
+}
+
+sub YYSTATE {
+    &yy_top_state;
+}
+
+sub YY_START {
+    &yy_top_state;
 }
 
 sub yyprint {

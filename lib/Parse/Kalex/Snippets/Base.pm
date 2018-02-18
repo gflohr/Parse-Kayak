@@ -106,6 +106,12 @@ sub YYPUSH {
     return $self;
 }
 
+sub yy_push_state {
+    my ($self, $state) = @_;
+
+    return $self->YYPUSH($state);
+}
+
 sub YYPOP {
     my ($self) = @_;
 
@@ -115,6 +121,10 @@ sub YYPOP {
     return $self;
 }
 
+sub yy_pop_state {
+    shift->YYPOP;
+}
+
 sub YYBEGIN {
     my ($self, $state) = @_;
 
@@ -122,6 +132,20 @@ sub YYBEGIN {
     $self->{__yystate} = [$nstate];
 
     return $self;
+}
+
+sub yy_begin_state {
+    my ($self, $state) = @_;
+
+    return $self->YYBEGIN($state);
+}
+
+sub YYTOP {
+    shift->{__yystate}->[-1];
+}
+
+sub yy_top_state {
+    shift->{__yystate}->[-1];
 }
 
 sub yy_start_name {
@@ -134,6 +158,14 @@ sub yy_start_number {
     my ($self, $name) = @_;
 
     return $self->{__yycondition_names}->[$name];
+}
+
+sub YYSTATE {
+    shift->YYTOP;
+}
+
+sub YY_START {
+    shift->YY_START;
 }
 
 sub REJECT {
