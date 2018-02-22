@@ -23,6 +23,8 @@ my %WriteMakefileArgs = (
   "LICENSE" => "unrestricted",
   "NAME" => "Parse::Kayak",
   "PREREQ_PM" => {
+    "Carp" => 0,
+    "Data::Dumper" => 0,
     "File::Spec" => 0,
     "Getopt::Long" => "2.36",
     "IO::Handle" => 0,
@@ -30,8 +32,13 @@ my %WriteMakefileArgs = (
     "Locale::TextDomain" => 0,
     "PPI::Tokenizer" => 0,
     "Parse::Yapp" => 0,
+    "Parse::Yapp::Driver" => 0,
+    "Scalar::Util" => 0,
+    "Storable" => 0,
     "constant" => 0,
-    "strict" => 0
+    "re" => 0,
+    "strict" => 0,
+    "vars" => 0
   },
   "TEST_REQUIRES" => {
     "Test::More" => 0
@@ -44,6 +51,8 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "Carp" => 0,
+  "Data::Dumper" => 0,
   "File::Spec" => 0,
   "Getopt::Long" => "2.36",
   "IO::Handle" => 0,
@@ -52,9 +61,14 @@ my %FallbackPrereqs = (
   "Module::Build" => "0.28",
   "PPI::Tokenizer" => 0,
   "Parse::Yapp" => 0,
+  "Parse::Yapp::Driver" => 0,
+  "Scalar::Util" => 0,
+  "Storable" => 0,
   "Test::More" => 0,
   "constant" => 0,
-  "strict" => 0
+  "re" => 0,
+  "strict" => 0,
+  "vars" => 0
 );
 
 

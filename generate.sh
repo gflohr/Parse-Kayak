@@ -12,6 +12,8 @@ if [ "x$p5_sitebin" != "x" -a -e "$p5_sitebin" ]; then
 fi
 
 YAPP=${YAPP:-yapp}
+KALEX=${KALEX:-kalex}
 
 mkdir -p lib/Parse/Kalex
 $YAPP -v -m Parse::Kalex::Parser -o lib/Parse/Kalex/Parser.pm kalex.y
+$KALEX --outfile=lib/Parse/Kalex/LexerBase.pm kalex.l

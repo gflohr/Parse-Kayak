@@ -18,3 +18,4 @@ _Inline/
 /README.pod
 *.output
 lib/Parse/Kalex/Parser.pm
+lib/Parse/Kalex/LexerBase.pm
