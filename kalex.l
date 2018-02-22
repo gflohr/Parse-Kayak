@@ -21,11 +21,18 @@ NOWS      [^ \011-\015]
 OPTION    [-_a-zA-Z0-9]+
 
 %s RULES
+%s USER_CODE
 
 %%
 ${WSNEWLINE}+                           /* discard */
-<INITIAL>^%%                            {
-        $_[0]->YYBEGIN('RULES'); 
+<INITIAL>^%%$WS*\n?                     {
+        $yyself->yyshrink(2);
+        $yyself->YYBEGIN('RULES'); 
+        return SEPARATOR => '%%';
+    }
+<RULES>^%%$WS*\n?                       {
+        $yyself->yyshrink(2);
+        $yyself->YYBEGIN('USER_CODE'); 
         return SEPARATOR => '%%';
     }
 .|\n                                    {
