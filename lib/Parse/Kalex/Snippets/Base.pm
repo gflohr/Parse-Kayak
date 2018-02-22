@@ -528,7 +528,7 @@ sub __yyvalidateStartCondition {
     
     if (!exists $self->{__yycondition_names}->{$state}) {
         die "YYPUSH/YYPOP/YYBEGIN called with undeclared start"
-            . " condition'$state'.\n";
+            . " condition '$state'.\n";
     }
 
     return $self->{__yycondition_names}->{$state};

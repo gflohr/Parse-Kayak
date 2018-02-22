@@ -12,6 +12,23 @@
 %option package="Parse::Kalex::LexerBase"
 %option strict
 %option yylineno
-%%
+%option yywrap
 
+IDENT     [^\000-\100\133-\136\140\173-\177][^\000-\057\072-\100\133-\136\140\173-\177]*
+WS        [ \011\013-\015]
+WSNEWLINE [ \011-\015]
+NOWS      [^ \011-\015]
+OPTION    [-_a-zA-Z0-9]+
+
+%s RULES
+
+%%
+${WSNEWLINE}+                           /* discard */
+<INITIAL>^%%                            {
+        $_[0]->YYBEGIN('RULES'); 
+        return SEPARATOR => '%%';
+    }
+.|\n                                    {
+        return $_[0]->{yytext}, $_[0]->{yytext};
+    }
 %%
