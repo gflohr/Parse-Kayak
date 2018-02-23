@@ -22,18 +22,28 @@ OPTION    [-_a-zA-Z0-9]+
 
 %s RULES
 %s USER_CODE
+%s CONDITION_DECLS
 
 %{
 use constant YYEOF => ('', undef);
 %}
 
 %%
-${WSNEWLINE}+                           /* discard */
 <INITIAL>^%%$WS*\n?                     {
         $yyself->yyshrink(2);
         $yyself->YYBEGIN('RULES');
 
         return SEPARATOR => '%%';
+    }
+<INITIAL>^(%[sx])$WS+                   {
+        $yyself->yyshrink(2);
+        $yyself->YYPUSH('CONDITION_DECLS');
+        return SC => $_[1];
+    }
+<CONDITION_DECLS>$IDENT                 return IDENT => $yyself->{yytext};
+<CONDITION_DECLS>\n                     {
+        $yyself->YYPOP;
+        return NEWLINE => "\n";
     }
 <RULES>^%%$WS*\n?                       {
         $yyself->yyshrink(2);
@@ -47,6 +57,7 @@ ${WSNEWLINE}+                           /* discard */
 
         return USER_CODE => $yyself->{yytext};
     }
+${WSNEWLINE}+                           /* discard */
 .|\n                                    {
         return $_[0]->{yytext}, $_[0]->{yytext};
     }

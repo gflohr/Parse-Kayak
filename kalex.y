@@ -135,8 +135,8 @@ conditions_space: IDENT
                 | conditions_space IDENT
                     {
                         $_[0]->YYData->{generator}
-                                     ->checkStartConditionDeclaration($_[3]);
-                        push @{$_[1]}, $_[3];
+                                     ->checkStartConditionDeclaration($_[2]);
+                        push @{$_[1]}, $_[2];
                         return $_[1];
                     }
                 ;
