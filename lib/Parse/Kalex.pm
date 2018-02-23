@@ -96,9 +96,8 @@ sub __validateStartCondition {
 sub __error {
     my ($self) = @_;
 
+    my $location = $self->location;
     my $lexer = $self->{__lexer};
-    my $filename = $lexer->{yyinname};
-    my $location = $filename . ':' . $lexer->yylocation;
 
     if (defined $lexer->{yypos}) {
         warn __x("{location}: syntax error near '{token}'.\n",
@@ -109,6 +108,17 @@ sub __error {
     }
 
     return $self;
+}
+
+sub location {
+    my ($self) = @_;
+
+    my $lexer = $self->{__lexer} or return;
+
+    my @l = ($lexer->{yyinname}, $lexer->yylocation);
+    return @l if wantarray;
+
+    return "$l[0]:$l[1].$l[2]-$l[3].$l[4]";
 }
 
 sub scan {
@@ -133,6 +143,7 @@ sub scan {
     }
     $parser->YYData->{generator} = Parse::Kalex::Generator->new($self,
                                                                 %options);
+    $self->{__generator} = $parser->YYData->{generator};
 
     $parser->YYData->{kalex} = $self;
     my $result = $parser->YYParse(yylex => $yylex,
@@ -141,7 +152,6 @@ sub scan {
 
     return if !defined $result;
 
-    $self->{__generator} = $parser->YYData->{generator};
     return if $self->{__generator}->errors;
 
     return $self;
@@ -160,6 +170,9 @@ sub output {
 
     if (!$generator) {
         $self->__fatal(__"output() called before scan()");
+    } elsif ($generator->errors) {
+        $self->__error(__"no output because of parser failure");
+        return;
     }
 
     $generator->mergeOptions;
@@ -419,7 +432,7 @@ sub __fatal {
 sub __fatalParseError {
     my ($self, $message) = @_;
 
-    my $location = $self->yylocation;
+    my $location = $self->location;
 
     $message =~ s/\s+$//;
     $message = __x("{location}: {error}\n",
@@ -491,10 +504,10 @@ sub __yyreadPerl {
     # NOT REACHED.
 }
 
-sub __yyReadRuleRegex {
+sub __readRuleRegex {
     my ($self, $yyinput) = @_;
 
-    my @location = $self->yylocation;
+    my @location = $self->location;
 
     # Make PPI::Tokenizer see a pattern match.
     substr $$yyinput, 0, 1, 'm';

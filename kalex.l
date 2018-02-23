@@ -23,17 +23,29 @@ OPTION    [-_a-zA-Z0-9]+
 %s RULES
 %s USER_CODE
 
+%{
+use constant YYEOF => ('', undef);
+%}
+
 %%
 ${WSNEWLINE}+                           /* discard */
 <INITIAL>^%%$WS*\n?                     {
         $yyself->yyshrink(2);
-        $yyself->YYBEGIN('RULES'); 
+        $yyself->YYBEGIN('RULES');
+
         return SEPARATOR => '%%';
     }
 <RULES>^%%$WS*\n?                       {
         $yyself->yyshrink(2);
         $yyself->YYBEGIN('USER_CODE'); 
+
         return SEPARATOR => '%%';
+    }
+<USER_CODE>(?:.|\n)*                    {
+        $yyself->YYBEGIN('INITIAL');
+        return YYEOF if !length $yyself->{yytext};
+
+        return USER_CODE => $yyself->{yytext};
     }
 .|\n                                    {
         return $_[0]->{yytext}, $_[0]->{yytext};

@@ -31,6 +31,9 @@ my @scanners = map { s/\.expect$//; $_ }
                readdir $dh;
 
 foreach my $scanner (sort @scanners) {
+    if (exists $ENV{PARSE_KALEX_FILTERS}) {
+        next unless $scanner =~ /^$ENV{PARSE_KALEX_FILTERS}$/;
+    }
     test_scanner $scanner;
 }
 
