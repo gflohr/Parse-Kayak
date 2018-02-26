@@ -23,6 +23,10 @@ OPTION    [-_a-zA-Z0-9]+
 %s RULES
 %s USER_CODE
 %s CONDITION_DECLS
+%s NAME
+
+%x DEF_REGEX
+%x DEF_CC
 
 %{
 use constant YYEOF => ('', undef);
@@ -40,10 +44,51 @@ use constant YYEOF => ('', undef);
         $yyself->YYPUSH('CONDITION_DECLS');
         return SC => $_[1];
     }
+<INITIAL>^($IDENT)$WS+                  {
+        $yyself->yyshrink(length $_[1]);
+        $yyself->YYPUSH('DEF_REGEX');
+        return NAME => $_[1];
+    }
+<DEF_REGEX>[^ \011-\015\\\[]]+          return PATTERN => $yyself->{yytext};
+<DEF_REGEX,DEF_CC>\\(.)                 return PATTERN => $_[1];
+<DEF_REGEX>\[                           { # Make vim happy: ]
+        $yyself->YYPUSH('DEF_CC');
+        return PATTERN => '[';
+    }
+<DEF_REGEX>$WSNEWLINE+                  {
+        # FIXME! Do not fall back to INITIAL but to a state, where we may
+        # read sequences of (C) comments.
+        $yyself->YYPOP;
+    }
+<DEF_CC>\]                              {
+        $yyself->YYPOP;
+        return PATTERN => ']';
+    }
+<DEF_CC>.                               return PATTERN => $yyself->{yytext};
+<DEF_CC>\n                              {
+        # Trigger a syntax error.
+        return NEWLINE => "\n";
+    }
+<DEF_REGEX>.                            return PATTERN => $yyself->{yytext};
+
 <CONDITION_DECLS>$IDENT                 return IDENT => $yyself->{yytext};
 <CONDITION_DECLS>\n                     {
         $yyself->YYPOP;
         return NEWLINE => "\n";
+    }
+<NAME>                                  {
+        # Match everything.
+        $yyself->YYPOP;
+        my $pattern = $yyself->__readDefRegex;
+        return '', '' if !length $pattern;
+
+        # This will adjust the location pointer.
+        $yyself->yyinput(length $pattern);
+
+        my $location = $yyself->yylocation;
+        print "LOCATION: $location\n";
+
+        return REGEX => $pattern;
     }
 <RULES>^%%$WS*\n?                       {
         $yyself->yyshrink(2);

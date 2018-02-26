@@ -36,7 +36,7 @@ definition: name_definition
               }
           ;
 
-name_definition: NAME {$_[0]->YYData->{generator}->checkName($_[1]) } REGEX
+name_definition: NAME {$_[0]->YYData->{generator}->checkName($_[1]) } dregex 
                  {
                      $_[0]->YYData->{generator}->addNameDefinition(
                          $_[1], $_[3]
@@ -105,12 +105,16 @@ rule_comments: COMMENT rule_comments
              | /* empty */
              ;
 
+dregex: PATTERN
+      | dregex PATTERN     { $_[1] .= $_[2] }
+      ;
+
 regex: patterns  { $_[1] }
      | MREGEX    { $_[1] }
      ;
      
-patterns: PATTERN            { $_[0]->YYData->{generator}->addRegex($_[1]) }
-        | patterns PATTERN      { $_[0]->YYData->{generator}->growRegex($_[1], $_[2])}
+patterns: PATTERN          { $_[0]->YYData->{generator}->addRegex($_[1]) }
+        | patterns PATTERN { $_[0]->YYData->{generator}->growRegex($_[1], $_[2])}
         ;
 
 conditions_comma: IDENT
