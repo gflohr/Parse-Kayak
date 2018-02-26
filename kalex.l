@@ -13,6 +13,7 @@
 %option strict
 %option yylineno
 %option yywrap
+%option noline
 
 IDENT     [^\000-\100\133-\136\140\173-\177][^\000-\057\072-\100\133-\136\140\173-\177]*
 WS        [ \011\013-\015]
@@ -27,6 +28,7 @@ OPTION    [-_a-zA-Z0-9]+
 
 %x DEF_REGEX
 %x DEF_CC
+%x CCOMMENT
 
 %{
 use constant YYEOF => ('', undef);
@@ -48,6 +50,10 @@ use constant YYEOF => ('', undef);
         $yyself->yyshrink(length $_[1]);
         $yyself->YYPUSH('DEF_REGEX');
         return NAME => $_[1];
+    }
+<CCOMMENT>/\*((?:.|\n)*?)\*/            {
+        $yyself->YYPOP;
+        return COMMENT => $yyself->__convertComment($yyself->{yytext});
     }
 <DEF_REGEX>[^ \011-\015\\\[]]+          return PATTERN => $yyself->{yytext};
 <DEF_REGEX,DEF_CC>\\(.)                 return PATTERN => $_[1];
@@ -102,8 +108,18 @@ use constant YYEOF => ('', undef);
 
         return USER_CODE => $yyself->{yytext};
     }
-${WSNEWLINE}+                           /* discard */
-.|\n                                    {
+^$(WS+)/\*                              {
+        $yyself->yyless(length $_[1]);
+        $yyself->YYPUSH('CCOMMENT');
+    }
+/\*                                     {
+        $yyself->yyless(0);
+        $yyself->YYPUSH('CCOMMENT');
+    }
+        $yyself->YYPUSH('CCOMMENT');
+\n                                      |
+${WS}+                                  /* discard */
+.                                       {
         return $_[0]->{yytext}, $_[0]->{yytext};
     }
 %%
