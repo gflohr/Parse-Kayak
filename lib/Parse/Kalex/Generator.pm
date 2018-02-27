@@ -15,12 +15,9 @@ use strict;
 
 use Locale::TextDomain qw(kayak);
 use Data::Dumper;
-use Scalar::Util qw(weaken);
 
 sub new {
-    my ($class, $kalex, %options) = @_;
-
-    weaken $kalex;
+    my ($class, $lexer, %options) = @_;
 
     my %cli_options;
     foreach my $option (qw (yylineno line package strict)) {
@@ -32,7 +29,7 @@ sub new {
         __top_code => [],
         __def_code => [],
         __rules_code => [],
-        __kalex => $kalex,
+        __lexer => $lexer,
         __filename => '',
         __start_conditions => {
             INITIAL => 0,
@@ -77,7 +74,7 @@ sub checkOption {
 
     if (exists $options{$option}) {
         if (3 == @_) {
-            my $location = $self->{__kalex}->location;
+            my $location = $self->{__lexer}->location;
             warn __x("{location}: error: option '{option}' does"
                      . " not take an argument.\n",
                      location => $location, option => $option);
@@ -88,7 +85,7 @@ sub checkOption {
 
     if (exists $voptions{$option}) {
         if (3 != @_) {
-            my $location = $self->{__kalex}->location;
+            my $location = $self->{__lexer}->location;
             warn __x("{location}: error: option '{option}'"
                      . " requires an argument.\n",
                      location => $location, option => $option);
@@ -99,7 +96,7 @@ sub checkOption {
 
     if ($option =~ /^(no)(.*)/ && exists $options{$2}) {
         if (3 == @_) {
-            my $location = $self->{__kalex}->location;
+            my $location = $self->{__lexer}->location;
             warn __x("{location}: error: option '{option}' does"
                      . " not take an argument.\n",
                      location => $location, option => $option);
@@ -109,7 +106,7 @@ sub checkOption {
         return [$option, 0];
     }
 
-    my $location = $self->{__kalex}->location;
+    my $location = $self->{__lexer}->location;
     warn __x("{location}: error: unrecognized %option '{option}'.\n",
              location => $location, option => $option);
     ++$self->{__errors};
@@ -122,7 +119,7 @@ sub checkName {
 
     return $self if !exists $self->{__names}->{$name};
 
-    my $location = $self->{__kalex}->location;
+    my $location = $self->{__lexer}->location;
     warn __x("{location}: error: name '{name}' is alread defined.\n",
              location => $location, name => $name);
     
@@ -140,7 +137,7 @@ sub addNameDefinition {
 sub addTopCode {
     my ($self, $code) = @_;
 
-    my @location = $self->{__kalex}->location;
+    my @location = $self->{__lexer}->location;
     push @{$self->{__top_code}}, [ $code, @location ];
 
     return $self;
@@ -149,7 +146,7 @@ sub addTopCode {
 sub addDefCode {
     my ($self, $code) = @_;
 
-    my @location = $self->{__kalex}->location;
+    my @location = $self->{__lexer}->location;
     push @{$self->{__def_code}}, [ $code, @location ];
 
     return $self;
@@ -171,7 +168,7 @@ sub addRulesCode {
 sub setUserCode {
     my ($self, $code) = @_;
 
-    my @location = $self->{__kalex}->location;
+    my @location = $self->{__lexer}->location;
     $self->{__user_code} = [$code, @location ];
 
     return $self;
@@ -204,7 +201,7 @@ sub checkStartConditionDeclaration {
 
     if (exists $self->{__start_conditions}->{$condition}
         || exists $self->{__xstart_conditions}->{$condition}) {
-        my $location = $self->{__kalex}->location;
+        my $location = $self->{__lexer}->location;
         warn __x("{location}: warning: start condition '{condition}'"
                  . " is already declared.\n",
                  location => $location, condition => $condition);
@@ -218,7 +215,7 @@ sub checkStartCondition {
 
     if (!exists $self->{__start_conditions}->{$condition}
         && !exists $self->{__xstart_conditions}->{$condition}) {
-        my $location = $self->{__kalex}->location;
+        my $location = $self->{__lexer}->location;
         warn __x("{location}: warning: undeclared start condition '{condition}'.\n",
                  location => $location, condition => $condition);
         $self->{__start_conditions}->{$condition}
@@ -258,7 +255,7 @@ sub addRegex {
     my ($self, $chunk) = @_;
 
     return Parse::Kalex::Generator::Regex->new(
-        $chunk, $self->{__kalex}->location);
+        $chunk, $self->{__lexer}->location);
 }
 
 sub growRegex {
@@ -299,7 +296,7 @@ sub mergeOptions {
 }
 
 sub generate {
-    my ($self) = @_;
+    my ($self, $outname) = @_;
 
     my $output = '';
     my $top_code = $self->__topCode;
@@ -339,8 +336,8 @@ EOF
     }
 
     $output .= $self->__readModuleCode('Parse/Kalex/Snippets/Base.pm');
-    $output .= $self->__writeInit(2 + $output =~ y/\n/\n/);
-    $output .= $self->__writeYYLex(2 + $output =~ y/\n/\n/);
+    $output .= $self->__writeInit($outname, 2 + $output =~ y/\n/\n/);
+    $output .= $self->__writeYYLex($outname, 2 + $output =~ y/\n/\n/);
     $self->{__filename} = ''; # Invalidate cursor.
 
     my $user_code = $self->__userCode;
@@ -372,9 +369,8 @@ sub __dumpVariable {
 }
 
 sub __writeInit {
-    my ($self, $offset) = @_;
+    my ($self, $filename, $offset) = @_;
 
-    my $filename = $self->{__kalex}->outputFilename;
     my $output = '';
     $output .= qq{#line $offset "$filename"\n} if $self->{__options}->{line};
 
@@ -432,9 +428,8 @@ EOF
 }
 
 sub __writeYYLex {
-    my ($self, $offset) = @_;
+    my ($self, $filename, $offset) = @_;
 
-    my $filename = $self->{__kalex}->outputFilename;
     my $output = '';
     $output .= qq{#line $offset "$filename"\n} if $self->{__options}->{line};
 

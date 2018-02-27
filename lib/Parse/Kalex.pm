@@ -93,23 +93,6 @@ sub __validateStartCondition {
     return $method;
 }
 
-sub __error {
-    my ($self) = @_;
-
-    my $location = $self->location;
-    my $lexer = $self->{__lexer};
-
-    if (defined $lexer->{yypos}) {
-        warn __x("{location}: syntax error near '{token}'.\n",
-                 location => $location, token => $lexer->{yytext});
-    } else {
-        warn __x("{location}: syntax error at beginning of input.\n",
-                 location => $location);
-    }
-
-    return $self;
-}
-
 sub scan {
     my ($self) = @_;
 
@@ -120,7 +103,7 @@ sub scan {
     };
 
     my $yyerror = sub {
-        return $self->__error;
+        return $lexer->error;
     };
 
     my $parser = Parse::Kalex::Parser->new;
@@ -130,7 +113,7 @@ sub scan {
             $options{$option} = $self->{__options}->{$option};
         }
     }
-    $parser->YYData->{generator} = Parse::Kalex::Generator->new($self,
+    $parser->YYData->{generator} = Parse::Kalex::Generator->new($lexer,
                                                                 %options);
     $self->{__generator} = $parser->YYData->{generator};
 
@@ -144,10 +127,6 @@ sub scan {
     return if $self->{__generator}->errors;
 
     return $self;
-}
-
-sub outputFilename {
-    shift->{__outname};
 }
 
 sub output {
@@ -185,7 +164,7 @@ sub output {
 
     $self->{__outname} = $outname;
 
-    my $output = eval { $generator->generate };
+    my $output = eval { $generator->generate($self->{__outname}) };
     $self->__fatal($@) if $@;
 
     my $encoding = $options{encoding};
