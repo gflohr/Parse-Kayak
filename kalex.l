@@ -53,7 +53,6 @@ use constant YYEOF => ('', undef);
     }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
-        print "COMMENT: $yyself->{yytext}\n";
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
     }
 <CCOMMENT>/\*                           {
@@ -113,7 +112,7 @@ use constant YYEOF => ('', undef);
 
         return USER_CODE => $yyself->{yytext};
     }
-^$(WS+)/\*                              {
+^($WS+)/\*                              {
         $yyself->yyless(length $_[1]);
         $yyself->YYPUSH('CCOMMENT');
     }
