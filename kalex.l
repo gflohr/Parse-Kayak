@@ -53,7 +53,12 @@ use constant YYEOF => ('', undef);
     }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
+        print "COMMENT: $yyself->{yytext}\n";
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
+    }
+<CCOMMENT>/\*                           {
+        $yyself->__fatalParseError("cannot find comment delimiter '*/'"
+                                   . " before end of file");
     }
 <DEF_REGEX>[^ \011-\015\\\[]]+          return PATTERN => $yyself->{yytext};
 <DEF_REGEX,DEF_CC>\\(.)                 return PATTERN => $_[1];
@@ -116,7 +121,6 @@ use constant YYEOF => ('', undef);
         $yyself->yyless(0);
         $yyself->YYPUSH('CCOMMENT');
     }
-        $yyself->YYPUSH('CCOMMENT');
 \n                                      |
 ${WS}+                                  /* discard */
 .                                       {

@@ -110,17 +110,6 @@ sub __error {
     return $self;
 }
 
-sub location {
-    my ($self) = @_;
-
-    my $lexer = $self->{__lexer} or return;
-
-    my @l = ($lexer->{yyinname}, $lexer->yylocation);
-    return @l if wantarray;
-
-    return "$l[0]:$l[1].$l[2]-$l[3].$l[4]";
-}
-
 sub scan {
     my ($self) = @_;
 
@@ -426,18 +415,6 @@ sub __fatal {
     $message = __x("{location}: {error}\n",
                    location => $self->programName, error => $message);
     
-    die $message;
-}
-
-sub __fatalParseError {
-    my ($self, $message) = @_;
-
-    my $location = $self->location;
-
-    $message =~ s/\s+$//;
-    $message = __x("{location}: {error}\n",
-                   location => $location, error => $message);
-
     die $message;
 }
 
