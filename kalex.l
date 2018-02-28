@@ -62,6 +62,17 @@ use constant YYEOF => ('', undef);
 
         return DEF_CODE => $code;
     }
+<INITIAL>^\%top$WSNEWLINE*\{            {
+        my $code = eval { $yyself->__readPerl(substr $yyself->{yyinput},
+                                                     $yyself->{yypos} - 1) };
+        $yyself->__fatalParseError($@) if $@;
+        
+        # This will adjust the location pointer.  We need one extra character
+        # for the trailing delimiter.
+        $yyself->yyinput(1 + length $code);
+
+        return TOP_CODE => $code;
+    }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
