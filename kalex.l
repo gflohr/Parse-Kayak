@@ -13,7 +13,6 @@
 %option strict
 %option yylineno
 %option yywrap
-%option noline
 
 IDENT     [^\000-\100\133-\136\140\173-\177][^\000-\057\072-\100\133-\136\140\173-\177]*
 WS        [ \011\013-\015]
@@ -25,6 +24,8 @@ OPTION    [-_a-zA-Z0-9]+
 %s USER_CODE
 %s CONDITION_DECLS
 %s NAME
+%s OPTION
+%s OPTION_VALUE
 
 %x DEF_REGEX
 %x DEF_CC
@@ -74,7 +75,9 @@ use constant YYEOF => ('', undef);
         return TOP_CODE => $code;
     }
 <INITIAL>^%option$WS+                   {
+        $DB::single = 1;
         $yyself->yyshrink(7);
+        $yyself->YYPUSH('OPTION');
         return OPTION => '%option';
     }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
@@ -121,10 +124,40 @@ use constant YYEOF => ('', undef);
         # This will adjust the location pointer.
         $yyself->yyinput(length $pattern);
 
-        my $location = $yyself->yylocation;
-        print "LOCATION: $location\n";
-
         return REGEX => $pattern;
+    }
+<OPTION>($OPTION)$WS*                   {
+        $yyself->yyshrink(length $_[1]);
+        return OPTION_NAME => $_[1];
+    }
+<OPTION>=                               {
+        $yyself->yypush('OPTION_VALUE');
+        return '=', '=';
+    }
+<OPTION>\n                              {
+        $yyself->YYPOP;
+    }
+<OPTION_VALUE>"([^\\"]*(?:\\(?:.|\n)[^\\"]*)*)" {   # make vim happy: "
+        $yyself->YYPOP;
+        my $value = eval "qq{$_[1]}";
+        if ($@) {
+            # FIXME! Define how to communicate lexer errors to the parser.
+            return '', $_[1];
+        }
+        return OPTION_VALUE => $value;
+    }
+<OPTION_VALUE>'([^\\']*(?:\\(?:[\\'])[^\\']*)*)' {
+        $yyself->YYPOP;
+        my $value = eval "q{$_[1]}";
+        if ($@) {
+            # FIXME! Define how to communicate lexer errors to the parser.
+            return '', $_[1];
+        }
+        return OPTION_VALUE => $value;
+    }
+<OPTION_VALUE>$NOWS                     {
+        $yyself->YYPOP;
+        return OPTION_VALUE => $yyself->{yytext};
     }
 <RULES>^%%$WS*\n?                       {
         $yyself->yyshrink(2);
