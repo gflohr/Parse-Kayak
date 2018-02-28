@@ -73,6 +73,10 @@ use constant YYEOF => ('', undef);
 
         return TOP_CODE => $code;
     }
+<INITIAL>^%option$WS+                   {
+        $yyself->yyshrink(7);
+        return OPTION => '%option';
+    }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
