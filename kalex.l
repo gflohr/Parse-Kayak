@@ -51,6 +51,17 @@ use constant YYEOF => ('', undef);
         $yyself->YYPUSH('DEF_REGEX');
         return NAME => $_[1];
     }
+<INITIAL>^%\{                           {
+        my $code = eval { $yyself->__readPerl(substr $yyself->{yyinput},
+                                                     $yyself->{yypos} - 2) };
+        $yyself->__fatalParseError($@) if $@;
+        
+        # This will adjust the location pointer.  We need two extra characters
+        # for the trailing delimiter.
+        $yyself->yyinput(2 + length $code);
+
+        return DEF_CODE => $code;
+    }
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
