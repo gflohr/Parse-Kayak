@@ -51,7 +51,6 @@ use constant YYEOF => ('', undef);
         $yyself->YYPUSH('DEF_REGEX');
         return NAME => $_[1];
     }
-<INITIAL>^((?:$WS+.*\n)+)               return DEF_CODE => $yyself->{yytext};
 <CCOMMENT>/\*((?:.|\n)*?)\*/            {
         $yyself->YYPOP;
         return COMMENT => $yyself->__convertComment($yyself->{yytext});
@@ -117,6 +116,7 @@ use constant YYEOF => ('', undef);
         $yyself->yyless(length $_[1]);
         $yyself->YYPUSH('CCOMMENT');
     }
+<INITIAL>^((?:$WS+.*\n)+)               return DEF_CODE => $yyself->{yytext};
 /\*                                     {
         $yyself->yyless(0);
         $yyself->YYPUSH('CCOMMENT');
