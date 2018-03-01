@@ -99,7 +99,7 @@ sub scan {
     my $lexer = $self->{__lexer} = Parse::Kalex::Lexer->new(@{$self->{__input_files}});
 
     my $yylex = sub {
-        return $lexer->yylex;
+        $lexer->yylex;
     };
 
     my $yyerror = sub {

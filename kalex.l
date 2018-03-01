@@ -200,7 +200,10 @@ use constant YYEOF => ('', undef);
         $yyself->YYPUSH('REGEX');
     }
 <REGEX>$WS+                             $yyself->YYPOP;
-<REGEX>\n                               $yyself->YYBEGIN('RULES');
+<REGEX>\n                               {
+        $yyself->YYBEGIN('RULES');
+        return ACTION => '';
+    }
 <REGEX>\[\]?                            {
         $yyself->YYPUSH('REGEXCC');
         return PATTERN => $yyself->{yytext};
@@ -222,7 +225,11 @@ use constant YYEOF => ('', undef);
         # Syntax error.
         return NEWLINE => "\n";
     }
-<ACTION>\n                              $yyself->YYBEGIN('RULES');
+<ACTION>\n                              {
+        # The scanner always needs an action.  Return an empty string.
+        $yyself->YYBEGIN('RULES');
+        return ACTION => '';
+    }
 <ACTION>%?\{                            {
         my $code = eval { $yyself->__readPerl(substr $yyself->{yytext},
                                                      -1 + $yyself->{yypos}) };
