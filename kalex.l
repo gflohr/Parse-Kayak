@@ -231,7 +231,7 @@ use constant YYEOF => ('', undef);
         return ACTION => '';
     }
 <ACTION>%?\{                            {
-        my $code = eval { $yyself->__readPerl(substr $yyself->{yytext},
+        my $code = eval { $yyself->__readPerl(substr $yyself->{yyinput},
                                                      -1 + $yyself->{yypos}) };
         $yyself->__fatalParseError($@) if $@;
         $yyself->YYBEGIN('POST_ACTION');
