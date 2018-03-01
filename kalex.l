@@ -43,7 +43,6 @@ use constant YYEOF => ('', undef);
 
 %%
 <INITIAL>^%%$WS*\n?                     {
-        $DB::single = 1;
         $yyself->yyshrink(2);
         $yyself->YYBEGIN('RULES');
 
@@ -235,7 +234,7 @@ use constant YYEOF => ('', undef);
 <ACTION>(.+)\n                          {
         $yyself->yyshrink(length $_[1]);
         $yyself->YYBEGIN('RULES');
-        return ACTION => $code;
+        return ACTION => $_[1];
     }
 <POST_ACTION>\n                         $yyself->YYBEGIN('RULES');
 <USER_CODE>(?:.|\n)*                    {

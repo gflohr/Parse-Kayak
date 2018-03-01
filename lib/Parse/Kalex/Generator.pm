@@ -478,7 +478,7 @@ EOF
     }
 
     $yyself->{yytext} = '';
-    while (1) { $DB::single = 1;
+    while (1) {
         # Difference to flex! We return false, not 0 on EOF.
         $yyself->__yywrap and return;
         my $__yypattern = $yyself->__yypattern;
