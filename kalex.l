@@ -245,6 +245,11 @@ use constant YYEOF => ('', undef);
         $yyself->YYBEGIN('POST_ACTION');
         return ACTION => $code;
     }
+    /* Comment.  */
+<ACTION>/\*                             {
+        $yyself->yyless(0);
+        $yyself->YYPUSH('CCOMMENT');
+    }
     /* One-liner.  */
 <ACTION>(.+)\n                          {
         $yyself->yyshrink(length $_[1]);
