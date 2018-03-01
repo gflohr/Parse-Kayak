@@ -26,10 +26,15 @@ OPTION    [-_a-zA-Z0-9]+
 %s NAME
 %s OPTION
 %s OPTION_VALUE
+%s CONDITIONS
+%s ACTION
 
 %x DEF_REGEX
 %x DEF_CC
 %x CCOMMENT
+%x RULES_REGEX
+%x REGEX
+%x REGEXCC
 
 %{
 use constant YYEOF => ('', undef);
@@ -37,6 +42,7 @@ use constant YYEOF => ('', undef);
 
 %%
 <INITIAL>^%%$WS*\n?                     {
+        $DB::single = 1;
         $yyself->yyshrink(2);
         $yyself->YYBEGIN('RULES');
 
@@ -75,7 +81,6 @@ use constant YYEOF => ('', undef);
         return TOP_CODE => $code;
     }
 <INITIAL>^%option$WS+                   {
-        $DB::single = 1;
         $yyself->yyshrink(7);
         $yyself->YYPUSH('OPTION');
         return OPTION => '%option';
@@ -159,11 +164,63 @@ use constant YYEOF => ('', undef);
         $yyself->YYPOP;
         return OPTION_VALUE => $yyself->{yytext};
     }
+<RULES>^($WS+)(/\*.*?\*/)$WS*\n         {
+        # FIXME! Call yyforward() when implemented!
+        $yyself->yyshrink((length $_[1]) + (length $_[2]));
+        return RULES_CODE => $yyself->__convertComment($_[2]);
+    }
+<RULES>^($WS+)(.+)\n                    {
+        # FIXME! Call yyforward() when implemented!
+        $yyself->yyshrink((length $_[1]) + (length $_[2]));
+        return RULES_CODE => $_[2];
+    }
 <RULES>^%%$WS*\n?                       {
         $yyself->yyshrink(2);
         $yyself->YYBEGIN('USER_CODE'); 
 
         return SEPARATOR => '%%';
+    }
+<RULES><                                {
+        $yyself->yypush('CONDITIONS');
+        return '<', '<';
+    }
+<RULES>                                 {
+        $yyself->YYPUSH('RULES_REGEX');
+    }
+<RULES>\n
+<RULES_REGEX>\~                         {
+        my $regex = $yyself->__readRuleRegex(substr $yyself->{yyinput},
+                                                    $yyself->{yypos});
+        $yyself->YYPUSH('ACTION');
+        return MREGEX => $regex;
+    }
+<RULES_REGEX>                           {
+        # So that we fall back to ACTION after the next YYPOP.
+        $yyself->YYPUSH('ACTION');
+        $yyself->YYPUSH('REGEX');
+    }
+<REGEX>$WS+                             $yyself->YYPOP;
+<REGEX>\n                               $yyself->YYBEGIN('RULES');
+<REGEX>\[\]?                            {
+        $yyself->YYPUSH('REGEXCC');
+        return PATTERN => $yyself->{yytext};
+    }
+<REGEX>[^\$\\\[\( \011-\015]+           |
+<REGEX>\\[1-9][0-9]*                    |
+<REGEX>\$[_a-zA-Z][_a-zA-Z0-9]*         |
+<REGEX>\$\{[_a-zA-Z][_a-zA-Z0-9]*\}     |
+<REGEX>\\.                              |
+<REGEX>\(\??                            |
+<REGEX>.                                return PATTERN => $yyself->{yytext};
+<REGEXCC>\]                             {
+        $yyself->YYPOP;
+        return PATTERN => $1;
+    }
+<REGEXCC>\\.                            |
+<REGEXCC>.                              return PATTERN => $yyself->{yytext};
+<REGEXCC>\n                             {
+        # Syntax error.
+        return NEWLINE => "\n";
     }
 <USER_CODE>(?:.|\n)*                    {
         $yyself->YYBEGIN('INITIAL');
