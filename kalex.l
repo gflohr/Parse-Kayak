@@ -251,6 +251,7 @@ use constant YYEOF => ('', undef);
         $yyself->yyless(0);
         $yyself->YYPUSH('CCOMMENT');
     }
+<ACTION>$WS+
     /* One-liner.  */
 <ACTION>(.+)\n                          {
         $yyself->yyshrink(length $_[1]);
