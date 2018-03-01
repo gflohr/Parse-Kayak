@@ -28,6 +28,7 @@ OPTION    [-_a-zA-Z0-9]+
 %s OPTION_VALUE
 %s CONDITIONS
 %s ACTION
+%s POST_ACTION
 
 %x DEF_REGEX
 %x DEF_CC
@@ -181,7 +182,7 @@ use constant YYEOF => ('', undef);
         return SEPARATOR => '%%';
     }
 <RULES><                                {
-        $yyself->yypush('CONDITIONS');
+        $yyself->YYPUSH('CONDITIONS');
         return '<', '<';
     }
 <RULES>                                 {
@@ -222,6 +223,21 @@ use constant YYEOF => ('', undef);
         # Syntax error.
         return NEWLINE => "\n";
     }
+<ACTION>\n                              $yyself->YYBEGIN('RULES');
+<ACTION>%?\{                            {
+        my $code = eval { $yyself->__readPerl(substr $yyself->{yytext},
+                                                     -1 + $yyself->{yypos}) };
+        $yyself->__fatalParseError($@) if $@;
+        $yyself->YYBEGIN('POST_ACTION');
+        return ACTION => $code;
+    }
+    /* One-liner.  */
+<ACTION>(.+)\n                          {
+        $yyself->yyshrink(length $_[1]);
+        $yyself->YYBEGIN('RULES');
+        return ACTION => $code;
+    }
+<POST_ACTION>\n                         $yyself->YYBEGIN('RULES');
 <USER_CODE>(?:.|\n)*                    {
         $yyself->YYBEGIN('INITIAL');
         return YYEOF if !length $yyself->{yytext};

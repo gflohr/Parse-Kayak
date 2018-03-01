@@ -117,7 +117,7 @@ sub scan {
                                                                 %options);
     $self->{__generator} = $parser->YYData->{generator};
 
-    $parser->YYData->{kalex} = $self;
+    $parser->YYData->{lexer} = $lexer;
     my $result = $parser->YYParse(yylex => $yylex,
                                   yyerror => $yyerror,
                                   yydebug => $ENV{YYDEBUG});
