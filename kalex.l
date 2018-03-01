@@ -242,6 +242,7 @@ use constant YYEOF => ('', undef);
         my $code = eval { $yyself->__readPerl(substr $yyself->{yyinput},
                                                      -1 + $yyself->{yypos}) };
         $yyself->__fatalParseError($@) if $@;
+        $yyself->yyinput(1 + length $code);
         $yyself->YYBEGIN('POST_ACTION');
         return ACTION => $code;
     }
