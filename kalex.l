@@ -188,9 +188,17 @@ use constant YYEOF => ('', undef);
         $yyself->YYPUSH('RULES_REGEX');
     }
 <RULES>\n
+<CONDITIONS>$IDENT                      return IDENT => $yyself->{yytext};
+<CONDITIONS>\*                          return '*', '*'; 
+<CONDITIONS>,                           return ',', ',';
+<CONDITIONS>>                           {
+        $yyself->YYPOP;
+        $yyself->YYPUSH('RULES_REGEX');
+        return '>', '>';
+    }
 <RULES_REGEX>\~                         {
         my $regex = $yyself->__readRuleRegex(substr $yyself->{yyinput},
-                                                    $yyself->{yypos});
+                                                    $yyself->{yypos} - 1);
         $yyself->YYPUSH('ACTION');
         return MREGEX => $regex;
     }
