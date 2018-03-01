@@ -143,6 +143,10 @@ conditions_space: IDENT
                         push @{$_[1]}, $_[2];
                         return $_[1];
                     }
+                | conditions_space COMMENT
+                    {
+                        return $_[1];
+                    }
                 ;
 
 user_code_section: SEPARATOR USER_CODE
