@@ -23,7 +23,6 @@ OPTION    [-_a-zA-Z0-9]+
 %s RULES
 %s USER_CODE
 %s CONDITION_DECLS
-%s NAME
 %s OPTION
 %s OPTION_VALUE
 %s CONDITIONS
@@ -93,8 +92,8 @@ use constant YYEOF => ('', undef);
         $yyself->__fatalParseError("cannot find comment delimiter '*/'"
                                    . " before end of file");
     }
-<DEF_REGEX>[^ \011-\015\\\[]]+          return PATTERN => $yyself->{yytext};
-<DEF_REGEX,DEF_CC>\\(.)                 return PATTERN => $_[1];
+<DEF_REGEX>[^ \011-\015\\\[]]+          | 
+<DEF_REGEX,DEF_CC>\\.                   return PATTERN => $yyself->{yytext}; 
 <DEF_REGEX>\[                           { # Make vim happy: ]
         $yyself->YYPUSH('DEF_CC');
         return PATTERN => '[';
@@ -119,17 +118,6 @@ use constant YYEOF => ('', undef);
 <CONDITION_DECLS>\n                     {
         $yyself->YYPOP;
         return NEWLINE => "\n";
-    }
-<NAME>                                  {
-        # Match everything.
-        $yyself->YYPOP;
-        my $pattern = $yyself->__readDefRegex;
-        return '', '' if !length $pattern;
-
-        # This will adjust the location pointer.
-        $yyself->yyinput(length $pattern);
-
-        return REGEX => $pattern;
     }
 <OPTION>($OPTION)$WS*                   {
         $yyself->yyshrink(length $_[1]);
