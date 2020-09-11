@@ -490,7 +490,7 @@ sub __yymatch {
         my $ruleno = $self->{__yymatch}->[0];
         my $default_rule = -1 + @{$self->{__rules}};
         my $pretty_match = $self->__yyescape($match);
-        my $condition = $self->{__yyconditions}[$self->{__state}->[-1]];
+        my $condition = $self->{__yyconditions}[$self->{__yystate}->[-1]];
         if ($ruleno == $default_rule) {
             print STDERR qq{<$condition> accepting default rule ("$pretty_match")\n};
         } else {
