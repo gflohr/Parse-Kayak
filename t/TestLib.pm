@@ -16,6 +16,8 @@ use File::Spec;
 
 use Parse::Kalex;
 
+use lib '.';
+
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(create_lexer assert_location);
 
